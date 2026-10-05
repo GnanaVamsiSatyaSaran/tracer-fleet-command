@@ -88,8 +88,28 @@ async function getTelemetryHistory(req, res) {
   }
 }
 
+/**
+ * Controller for GET /api/telemetry/analytics
+ * Calculates entry/exit times, durations, speeds, and total distance.
+ */
+async function getDailyAnalytics(req, res) {
+  try {
+    const { date, asset_id } = req.query;
+    const analytics = await telemetryService.getDailyAnalytics(date, asset_id);
+    return res.json(analytics);
+  } catch (error) {
+    console.error('[TelemetryController] Error generating analytics:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to compute transit analytics',
+    });
+  }
+}
+
 module.exports = {
   postBatchTelemetry,
   getTelemetryHistory,
+  getDailyAnalytics,
 };
+
 

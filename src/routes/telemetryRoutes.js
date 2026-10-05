@@ -9,6 +9,9 @@ router.post('/telemetry', telemetryController.postBatchTelemetry);
 // GET /api/telemetry/history - Historical route replay coordinates
 router.get('/telemetry/history', telemetryController.getTelemetryHistory);
 
+// GET /api/telemetry/analytics - Daily geofence entry/exit and transit analytics
+router.get('/telemetry/analytics', telemetryController.getDailyAnalytics);
+
 // GET /api/telemetry/geofence-check - Direct spatial test endpoint
 router.get('/telemetry/geofence-check', async (req, res) => {
   try {

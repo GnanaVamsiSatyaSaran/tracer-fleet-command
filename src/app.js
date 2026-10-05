@@ -1,8 +1,14 @@
 const express = require('express');
 const telemetryRoutes = require('./routes/telemetryRoutes');
 const geofenceRoutes = require('./routes/geofenceRoutes');
+const assetRoutes = require('./routes/assetRoutes');
+const personnelRoutes = require('./routes/personnelRoutes');
+const { initializeDatabase } = require('./config/dbInit');
 
 const app = express();
+
+// Initialize Database Schemas and Extensions
+initializeDatabase();
 
 // Middleware
 app.use(express.json({ limit: '5mb' }));
@@ -39,9 +45,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Mount Telemetry and Geofence API Routes
+// Mount Production API Routes
 app.use('/api', telemetryRoutes);
 app.use('/api', geofenceRoutes);
+app.use('/api', assetRoutes);
+app.use('/api', personnelRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

@@ -1,20 +1,20 @@
 -- ============================================================================
 -- FLEET COMMAND: CAMPUS TRANSIT TRACKING SYSTEM
--- PostgreSQL + PostGIS 4-Table Production Architecture
+-- PostgreSQL + PostGIS 5-Table High-Performance Cloud Architecture
 -- ============================================================================
 
--- 1. Enable required extensions
+-- 1. Enable Required Spatial & Identifier Extensions
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
 -- TABLE 1: fleet_assets
--- Physical vehicles (buses, shuttles, vans) deployed across campus
+-- Physical transit vehicles (Buses, Shuttles, Logistics Vans)
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS fleet_assets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    asset_tag VARCHAR(50) UNIQUE NOT NULL,      -- e.g., 'BUS-101', 'SHUTTLE-A'
-    license_plate VARCHAR(20) NOT NULL,
+    id VARCHAR(64) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    asset_tag VARCHAR(50) UNIQUE NOT NULL,      -- e.g., 'GITAM-BUS-01', 'SHUTTLE-A'
+    license_plate VARCHAR(30) NOT NULL,
     model VARCHAR(100) NOT NULL,
     capacity INTEGER NOT NULL DEFAULT 40,
     status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE' 
@@ -23,32 +23,38 @@ CREATE TABLE IF NOT EXISTS fleet_assets (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_fleet_assets_tag ON fleet_assets(asset_tag);
+CREATE INDEX IF NOT EXISTS idx_fleet_assets_status ON fleet_assets(status);
+
 -- ============================================================================
 -- TABLE 2: personnel
--- Authorized drivers, operators, and field transit staff
+-- Authorized drivers, field transit technicians, and dispatch operators
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS personnel (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id VARCHAR(64) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
     employee_id VARCHAR(50) UNIQUE NOT NULL,    -- e.g., 'EMP-8832'
     full_name VARCHAR(100) NOT NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'DRIVER' 
         CHECK (role IN ('DRIVER', 'DISPATCHER', 'SUPERVISOR', 'MAINTENANCE_TECH')),
-    phone_number VARCHAR(20),
+    phone_number VARCHAR(30),
     license_number VARCHAR(50),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_personnel_emp_id ON personnel(employee_id);
+CREATE INDEX IF NOT EXISTS idx_personnel_active ON personnel(is_active);
+
 -- ============================================================================
 -- TABLE 3: active_sessions
--- Operational shifts/trips binding a specific driver to an asset
+-- Operational shifts/trips binding a certified driver to an asset
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS active_sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    asset_id UUID NOT NULL REFERENCES fleet_assets(id) ON DELETE CASCADE,
-    personnel_id UUID NOT NULL REFERENCES personnel(id) ON DELETE RESTRICT,
-    route_id VARCHAR(50) NOT NULL,             -- e.g., 'ROUTE_NORTH_CAMPUS'
+    id VARCHAR(64) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+    asset_id VARCHAR(64) NOT NULL,
+    personnel_id VARCHAR(64) NOT NULL,
+    route_id VARCHAR(50) NOT NULL,             -- e.g., 'ROUTE_KRC_NORTH_LOOP'
     status VARCHAR(30) NOT NULL DEFAULT 'IN_PROGRESS' 
         CHECK (status IN ('IN_PROGRESS', 'PAUSED', 'COMPLETED', 'ABORTED')),
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -58,7 +64,6 @@ CREATE TABLE IF NOT EXISTS active_sessions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Quick lookup index for currently active sessions
 CREATE INDEX IF NOT EXISTS idx_active_sessions_status_asset 
     ON active_sessions(asset_id, status) WHERE status = 'IN_PROGRESS';
 
@@ -67,12 +72,12 @@ CREATE INDEX IF NOT EXISTS idx_active_sessions_status_personnel
 
 -- ============================================================================
 -- TABLE 4: telemetry_logs
--- High-frequency spatial GPS logs emitted from on-vehicle hardware
+-- High-frequency spatial GPS logs emitted from on-vehicle hardware/Android
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS telemetry_logs (
     id BIGSERIAL PRIMARY KEY,
-    session_id UUID REFERENCES active_sessions(id) ON DELETE SET NULL,
-    asset_id UUID NOT NULL REFERENCES fleet_assets(id) ON DELETE CASCADE,
+    session_id VARCHAR(64),
+    asset_id VARCHAR(64) NOT NULL,
     
     -- Spatial Geometry column: WGS 84 (SRID 4326) Point
     location GEOMETRY(Point, 4326) NOT NULL,
@@ -96,19 +101,38 @@ CREATE INDEX IF NOT EXISTS idx_telemetry_logs_location
 CREATE INDEX IF NOT EXISTS idx_telemetry_logs_asset_recorded_at 
     ON telemetry_logs (asset_id, recorded_at DESC);
 
--- Index for session audit logs
 CREATE INDEX IF NOT EXISTS idx_telemetry_logs_session_id 
     ON telemetry_logs (session_id);
 
 -- ============================================================================
--- SPATIAL QUERY REFERENCE / REUSABLE FUNCTION
--- ST_DWithin with use_spheroid = false (High Performance Spherical Check)
+-- TABLE 5: dynamic_geofences
+-- Dynamic multi-polygon geofences drawn by dispatch administrators
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS dynamic_geofences (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(128) NOT NULL,
+    color VARCHAR(32) DEFAULT '#00F0FF',
+    type VARCHAR(32) DEFAULT 'polygon',
+    coordinates JSONB NOT NULL,
+    radius_meters NUMERIC DEFAULT 100,
+    polygon_geom GEOMETRY(Polygon, 4326),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- GiST Spatial Index on dynamic polygon geometries
+CREATE INDEX IF NOT EXISTS idx_dynamic_geofences_geom 
+    ON dynamic_geofences USING GIST (polygon_geom);
+
+-- ============================================================================
+-- CRITICAL MATH RULE: HIGH PERFORMANCE SPATIAL CALCULATION
+-- PostGIS ST_DWithin with use_spheroid = false (Spherical Spatial Index Scan)
+-- ST_Distance is strictly avoided to prevent sequential scan lag.
 -- ============================================================================
 CREATE OR REPLACE FUNCTION check_campus_geofence(
     p_longitude NUMERIC,
     p_latitude NUMERIC,
-    p_center_longitude NUMERIC DEFAULT 83.377500,  -- Default Campus Hub
-    p_center_latitude NUMERIC DEFAULT 17.782167,
+    p_center_longitude NUMERIC DEFAULT 83.377472,  -- KRC Hub Longitude
+    p_center_latitude NUMERIC DEFAULT 17.782167,   -- KRC Hub Latitude
     p_radius_meters DOUBLE PRECISION DEFAULT 100.0
 )
 RETURNS BOOLEAN
@@ -119,6 +143,6 @@ AS $$
         ST_SetSRID(ST_MakePoint(p_longitude, p_latitude), 4326)::geography,
         ST_SetSRID(ST_MakePoint(p_center_longitude, p_center_latitude), 4326)::geography,
         p_radius_meters,
-        false   -- use_spheroid = false for spherical calculation (~5x faster than ellipsoid)
+        false   -- CRITICAL: use_spheroid = false (Spherical indexing, 5x faster than ellipsoid)
     );
 $$;
