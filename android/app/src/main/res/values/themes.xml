@@ -1,12 +1,13 @@
 <resources>
     <style name="Theme.FleetTracker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/midnight_primary</item>
-        <item name="colorPrimaryVariant">@color/midnight_dark</item>
+        <item name="colorPrimary">@color/obsidian_surface</item>
+        <item name="colorPrimaryVariant">@color/obsidian_bg</item>
         <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/amber_primary</item>
+        <item name="colorSecondary">@color/amber_electric</item>
         <item name="colorSecondaryVariant">@color/amber_dark</item>
-        <item name="colorOnSecondary">@color/midnight_dark</item>
-        <item name="android:statusBarColor">@color/midnight_dark</item>
-        <item name="android:windowBackground">@color/midnight_dark</item>
+        <item name="colorOnSecondary">@color/obsidian_bg</item>
+        <item name="android:statusBarColor">@color/obsidian_bg</item>
+        <item name="android:navigationBarColor">@color/obsidian_bg</item>
+        <item name="android:windowBackground">@color/obsidian_bg</item>
     </style>
 </resources>

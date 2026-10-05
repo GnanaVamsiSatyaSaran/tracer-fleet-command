@@ -5,6 +5,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -25,7 +29,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * Driver Console UI: High-contrast, distraction-free emitter dashboard.
+ * Driver Console UI: High-contrast Obsidian Dark HUD Emitter Dashboard.
+ * Designed for professional transit operations, zero accidental taps, and real-time GNSS telemetry.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -40,6 +45,9 @@ class MainActivity : AppCompatActivity() {
         "GITAM-BUS-05"
     )
 
+    private var connectivityManager: ConnectivityManager? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
     // Runtime Permission Request Contract
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -50,7 +58,8 @@ class MainActivity : AppCompatActivity() {
         if (fineLocationGranted || coarseLocationGranted) {
             proceedToggleShift()
         } else {
-            Toast.makeText(this, "Precise GPS permission required to track vehicle", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Precise GNSS/GPS permission required for fleet tracking", Toast.LENGTH_LONG).show()
+            binding.swipeSliderShift.setShiftActive(false)
         }
     }
 
@@ -63,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         setupServerUrl()
         setupListeners()
         observeServiceState()
+        observeNetworkState()
         checkBatteryOptimizationStatus()
     }
 
@@ -72,15 +82,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupServerUrl() {
-        // Defaults to local Node.js backend port 3000
+        // Defaults to live Render Cloud production endpoint
         binding.etServerUrl.setText(TelemetryUploader.DEFAULT_SERVER_URL)
     }
 
     private fun setupListeners() {
-        binding.btnToggleShift.setOnClickListener {
+        // Interactive Swipe-to-Start Shift Component
+        binding.swipeSliderShift.onSwipeCompleteListener = {
             checkPermissionsAndToggleShift()
         }
 
+        // Quick Ingestion Target Switchers
+        binding.btnSetCloudUrl.setOnClickListener {
+            binding.etServerUrl.setText(TelemetryUploader.DEFAULT_SERVER_URL)
+            Toast.makeText(this, "Target: Render Cloud Production", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnSetLocalUrl.setOnClickListener {
+            binding.etServerUrl.setText(TelemetryUploader.LOCAL_SERVER_URL)
+            Toast.makeText(this, "Target: Local LAN Gateway", Toast.LENGTH_SHORT).show()
+        }
+
+        // Battery Optimization Exemption
         binding.btnBatteryOpt.setOnClickListener {
             requestBatteryOptimizationExemption()
         }
@@ -108,8 +131,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun proceedToggleShift() {
-        val selectedBusId = binding.spinnerBusId.selectedItem.toString()
-        val serverEndpoint = binding.etServerUrl.text.toString().trim()
+        val selectedBusId = binding.spinnerBusId.selectedItem?.toString() ?: "GITAM-BUS-01"
+        val serverEndpoint = binding.etServerUrl.text.toString().trim().ifEmpty {
+            TelemetryUploader.DEFAULT_SERVER_URL
+        }
 
         if (isShiftActive) {
             // Stop Shift
@@ -117,7 +142,7 @@ class MainActivity : AppCompatActivity() {
                 action = LocationService.ACTION_STOP
             }
             startService(intent)
-            Toast.makeText(this, "Shift Concluded for $selectedBusId", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Shift Ended: $selectedBusId offline", Toast.LENGTH_SHORT).show()
         } else {
             // Start Shift
             val intent = Intent(this, LocationService::class.java).apply {
@@ -141,36 +166,40 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun updateUiForShiftState(state: LocationService.Companion.ServiceState) {
-        if (state.isTracking) {
-            // Running State (Crimson Stop Button)
-            binding.btnToggleShift.text = getString(R.string.end_shift)
-            binding.btnToggleShift.setBackgroundColor(ContextCompat.getColor(this, R.color.crimson_stop))
-            binding.btnToggleShift.setTextColor(ContextCompat.getColor(this, R.color.white))
+        // Sync interactive slider and radar HUD
+        binding.swipeSliderShift.setShiftActive(state.isTracking)
+        binding.radarPulseView.setPulsing(state.isTracking)
 
+        if (state.isTracking) {
+            // Live Transmitting State
             binding.tvLiveStatusBadge.text = "TRANSMITTING"
-            binding.tvLiveStatusBadge.setBackgroundColor(ContextCompat.getColor(this, R.color.midnight_surface))
             binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
+
+            binding.tvTransmittingHudTag.text = "TRANSMITTING LIVE GPS"
+            binding.tvTransmittingHudTag.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
 
             binding.spinnerBusId.isEnabled = false
             binding.etServerUrl.isEnabled = false
+            binding.btnSetCloudUrl.isEnabled = false
+            binding.btnSetLocalUrl.isEnabled = false
         } else {
-            // Standby State (Electric Amber Start Button)
-            binding.btnToggleShift.text = getString(R.string.start_shift)
-            binding.btnToggleShift.setBackgroundColor(ContextCompat.getColor(this, R.color.amber_primary))
-            binding.btnToggleShift.setTextColor(ContextCompat.getColor(this, R.color.midnight_dark))
-
+            // Standby State
             binding.tvLiveStatusBadge.text = "STANDBY"
-            binding.tvLiveStatusBadge.setBackgroundColor(ContextCompat.getColor(this, R.color.slate_800))
             binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+
+            binding.tvTransmittingHudTag.text = "TRANSPONDER STANDBY"
+            binding.tvTransmittingHudTag.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
 
             binding.spinnerBusId.isEnabled = true
             binding.etServerUrl.isEnabled = true
+            binding.btnSetCloudUrl.isEnabled = true
+            binding.btnSetLocalUrl.isEnabled = true
         }
 
-        // Live Speed
+        // Live Ground Speed
         binding.tvLiveSpeed.text = String.format(Locale.US, "%.1f", state.speedKmh)
 
-        // Coordinates & Accuracy
+        // Coordinates & GNSS Accuracy
         if (state.latitude != 0.0 || state.longitude != 0.0) {
             binding.tvCoordinates.text = String.format(
                 Locale.US,
@@ -178,23 +207,61 @@ class MainActivity : AppCompatActivity() {
                 state.latitude,
                 state.longitude
             )
-            binding.tvAccuracy.text = "±${state.accuracy.toInt()}m"
+            binding.tvAccuracy.text = "±${String.format(Locale.US, "%.1f", state.accuracy)}m"
+            binding.tvAccuracy.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
         } else {
-            binding.tvCoordinates.text = "Awaiting lock…"
+            binding.tvCoordinates.text = "Awaiting GNSS lock…"
             binding.tvAccuracy.text = "± -- m"
+            binding.tvAccuracy.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
         }
 
-        // Anti-Spoofing Indicator
+        // Anti-Spoofing Hardware Validation
         if (state.spoofDetectedCount > 0) {
             binding.tvAntiSpoofStatus.text = "ALERT: ${state.spoofDetectedCount} Fake GPS Blocked"
             binding.tvAntiSpoofStatus.setTextColor(ContextCompat.getColor(this, R.color.crimson_stop))
         } else {
-            binding.tvAntiSpoofStatus.text = "Hardware GNSS (0 Blocked)"
+            binding.tvAntiSpoofStatus.text = "GNSS Verified (0 Spoofed)"
             binding.tvAntiSpoofStatus.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
         }
 
-        // Store-and-Forward Offline Queue Counter
+        // Store-and-Forward SQLite Backlog Count
         binding.tvOfflineQueue.text = "${state.unsyncedCount} pending records"
+        if (state.unsyncedCount > 0) {
+            binding.tvOfflineQueue.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
+        } else {
+            binding.tvOfflineQueue.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+        }
+    }
+
+    private fun observeNetworkState() {
+        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                val caps = connectivityManager?.getNetworkCapabilities(network)
+                val type = when {
+                    caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> "Connected (WiFi)"
+                    caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> "Connected (4G/LTE)"
+                    else -> "Connected (Active)"
+                }
+                runOnUiThread {
+                    binding.tvNetworkStatus.text = type
+                    binding.tvNetworkStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.cyan_neon))
+                }
+            }
+
+            override fun onLost(network: Network) {
+                runOnUiThread {
+                    binding.tvNetworkStatus.text = "Offline (Caching to SQLite)"
+                    binding.tvNetworkStatus.setTextColor(ContextCompat.getColor(this@MainActivity, R.color.amber_electric))
+                }
+            }
+        }
+
+        connectivityManager?.registerNetworkCallback(request, networkCallback!!)
     }
 
     private fun checkBatteryOptimizationStatus() {
@@ -219,6 +286,13 @@ class MainActivity : AppCompatActivity() {
                 val fallbackIntent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                 startActivity(fallbackIntent)
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        networkCallback?.let {
+            connectivityManager?.unregisterNetworkCallback(it)
         }
     }
 }

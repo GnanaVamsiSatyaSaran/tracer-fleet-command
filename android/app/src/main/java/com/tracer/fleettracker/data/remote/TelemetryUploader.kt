@@ -19,7 +19,8 @@ class TelemetryUploader(private val context: Context) {
 
     companion object {
         private const val TAG = "TelemetryUploader"
-        const val DEFAULT_SERVER_URL = "http://172.19.205.20:3000/api/telemetry"
+        const val DEFAULT_SERVER_URL = "https://fleet-command-api.onrender.com/api/telemetry"
+        const val LOCAL_SERVER_URL = "http://172.19.205.20:3000/api/telemetry"
         private const val CONNECT_TIMEOUT_MS = 6000
         private const val READ_TIMEOUT_MS = 8000
     }

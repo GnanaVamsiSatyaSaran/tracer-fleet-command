@@ -4,25 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/midnight_dark"
+    android:background="@color/obsidian_bg"
     android:orientation="vertical"
-    android:padding="20dp">
+    android:padding="18dp">
 
-    <!-- ── Top Header Bar ──────────────────────────────────────── -->
+    <!-- ── Top Enterprise Header Bar ──────────────────────────────────────── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingBottom="16dp">
+        android:paddingBottom="14dp">
 
         <TextView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@color/amber_primary"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_slider_thumb"
             android:gravity="center"
             android:text="⚡"
-            android:textSize="18sp" />
+            android:textColor="@color/obsidian_bg"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -31,31 +33,51 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.05"
-                android:text="FLEET TRACKER"
-                android:textColor="@color/white"
-                android:textSize="18sp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.05"
+                    android:text="FLEET TRACKER"
+                    android:textColor="@color/white"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_obsidian_subtle"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:text="v2.5"
+                    android:textColor="@color/amber_electric"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Driver Telemetry Emitter"
+                android:text="GITAM Campus Transit • Driver Emitter"
                 android:textColor="@color/slate_400"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/tvLiveStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/slate_800"
+            android:background="@drawable/bg_obsidian_subtle"
             android:fontFamily="monospace"
             android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
+            android:paddingVertical="5dp"
             android:text="STANDBY"
             android:textColor="@color/slate_400"
             android:textSize="11sp"
@@ -66,97 +88,179 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ── Bus Selection Card ────────────────────────────── -->
+            <!-- ── Card 1: Asset & Endpoint Configuration ─────────────────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                app:cardBackgroundColor="@color/midnight_primary"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardBackgroundColor="@color/obsidian_surface"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_obsidian_card"
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-medium"
-                        android:text="ASSIGNED VEHICLE (BUS ID)"
-                        android:textColor="@color/gold_accent"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="ASSIGNED VEHICLE TRANSPONDER"
+                            android:textColor="@color/amber_electric"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvActiveDriverName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Captain: Ramesh K."
+                            android:textColor="@color/slate_300"
+                            android:textSize="11sp" />
+                    </LinearLayout>
 
                     <Spinner
                         android:id="@+id/spinnerBusId"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:background="@color/slate_800"
-                        android:popupBackground="@color/slate_800" />
+                        android:layout_height="46dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_obsidian_subtle"
+                        android:popupBackground="@color/obsidian_surface" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <!-- Quick Cloud vs LAN Toggle Chips -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="SERVER ENDPOINT"
-                        android:textColor="@color/slate_400"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="INGESTION TARGET"
+                            android:textColor="@color/slate_400"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/btnSetCloudUrl"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_obsidian_subtle"
+                            android:fontFamily="monospace"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp"
+                            android:text="☁️ Render Cloud"
+                            android:textColor="@color/cyan_neon"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/btnSetLocalUrl"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_obsidian_subtle"
+                            android:fontFamily="monospace"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp"
+                            android:text="💻 Local LAN"
+                            android:textColor="@color/slate_400"
+                            android:textSize="10sp" />
+                    </LinearLayout>
 
                     <EditText
                         android:id="@+id/etServerUrl"
                         android:layout_width="match_parent"
-                        android:layout_height="42dp"
-                        android:layout_marginTop="4dp"
-                        android:background="@color/slate_800"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_obsidian_subtle"
                         android:fontFamily="monospace"
-                        android:hint="http://192.168.0.205:3000/api/telemetry"
                         android:inputType="textUri"
                         android:paddingHorizontal="10dp"
                         android:textColor="@color/white"
                         android:textColorHint="@color/slate_500"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Speed & Live Telemetry HUD Card ──────────────── -->
+            <!-- ── Card 2: Live Radar HUD & Speed Telemetry ──────────────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
-                app:cardBackgroundColor="@color/midnight_surface"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                app:cardBackgroundColor="@color/obsidian_surface"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_obsidian_card"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="20dp">
 
+                    <!-- Concentric Radar Pulse Ring Frame -->
+                    <FrameLayout
+                        android:layout_width="110dp"
+                        android:layout_height="110dp">
+
+                        <com.tracer.fleettracker.ui.RadarPulseView
+                            android:id="@+id/radarPulseView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="🚌"
+                            android:textSize="22sp" />
+                    </FrameLayout>
+
                     <TextView
+                        android:id="@+id/tvTransmittingHudTag"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="CURRENT SPEED"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_obsidian_subtle"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="0.08"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="3dp"
+                        android:text="TRANSPONDER STANDBY"
                         android:textColor="@color/slate_400"
-                        android:textSize="11sp"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
 
+                    <!-- Current Ground Speed Readout -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
                         android:gravity="bottom"
                         android:orientation="horizontal">
 
@@ -166,13 +270,14 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif-black"
                             android:text="0.0"
-                            android:textColor="@color/gold_accent"
-                            android:textSize="54sp" />
+                            android:textColor="@color/amber_electric"
+                            android:textSize="58sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginBottom="10dp"
+                            android:layout_marginStart="6dp"
                             android:fontFamily="sans-serif-medium"
                             android:text="km/h"
                             android:textColor="@color/slate_400"
@@ -183,8 +288,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="12dp"
-                        android:background="@color/slate_700" />
+                        android:background="@color/obsidian_border" />
 
+                    <!-- Coordinates and Accuracy -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -199,16 +305,18 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="COORDINATES"
-                                android:textColor="@color/slate_400"
-                                android:textSize="10sp" />
+                                android:text="GPS COORDINATES"
+                                android:textColor="@color/slate_500"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/tvCoordinates"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
                                 android:fontFamily="monospace"
-                                android:text="Waiting for GPS…"
+                                android:text="17.782167, 83.377472"
                                 android:textColor="@color/white"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -224,15 +332,17 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="ACCURACY"
-                                android:textColor="@color/slate_400"
-                                android:textSize="10sp" />
+                                android:textColor="@color/slate_500"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/tvAccuracy"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
                                 android:fontFamily="monospace"
-                                android:text="± -- m"
+                                android:text="± 1.2 m"
                                 android:textColor="@color/emerald_online"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -241,20 +351,21 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Anti-Spoofing & Offline Queue Diagnostics Card ── -->
+            <!-- ── Card 3: Network & Anti-Spoofing Hardware Security ──────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/slate_900"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardBackgroundColor="@color/obsidian_surface"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_obsidian_card"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:padding="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -265,7 +376,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🛡️ Anti-Spoof Security:"
+                            android:text="🛡️ Anti-Spoof Hardware:"
                             android:textColor="@color/slate_400"
                             android:textSize="12sp" />
 
@@ -277,7 +388,7 @@
                             android:layout_weight="1"
                             android:fontFamily="monospace"
                             android:gravity="end"
-                            android:text="Real GPS Active (0 Blocked)"
+                            android:text="GNSS Verified (0 Spoofed)"
                             android:textColor="@color/emerald_online"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -293,7 +404,35 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="📦 Offline Backlog Queue:"
+                            android:text="📶 Network Transmission:"
+                            android:textColor="@color/slate_400"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvNetworkStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:fontFamily="monospace"
+                            android:gravity="end"
+                            android:text="Connected (WiFi / 4G)"
+                            android:textColor="@color/cyan_neon"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📦 SQLite Backlog Queue:"
                             android:textColor="@color/slate_400"
                             android:textSize="12sp" />
 
@@ -306,40 +445,34 @@
                             android:fontFamily="monospace"
                             android:gravity="end"
                             android:text="0 pending records"
-                            android:textColor="@color/gold_accent"
+                            android:textColor="@color/amber_electric"
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Battery Optimization Exemption Banner ─────────── -->
-            <Button
+            <!-- ── Battery Optimization Exemption Pill ────────────────────── -->
+            <TextView
                 android:id="@+id/btnBatteryOpt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:backgroundTint="@color/slate_800"
-                android:text="🔋 Request Doze &amp; Battery Exemption"
+                android:background="@drawable/bg_obsidian_subtle"
+                android:gravity="center"
+                android:paddingVertical="10dp"
+                android:text="🔋 Check Doze &amp; Battery Exemption"
                 android:textColor="@color/slate_400"
-                android:textSize="11sp"
-                android:visibility="visible" />
+                android:textSize="11sp" />
 
         </LinearLayout>
     </ScrollView>
 
-    <!-- ── Massive Full-Width Start / End Shift Button ─────────── -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnToggleShift"
+    <!-- ── Interactive Swipe-to-Start Shift Component ─────────────────────── -->
+    <com.tracer.fleettracker.ui.SwipeSliderView
+        android:id="@+id/swipeSliderShift"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:backgroundTint="@color/amber_primary"
-        android:elevation="8dp"
-        android:fontFamily="sans-serif-black"
-        android:letterSpacing="0.08"
-        android:text="START SHIFT"
-        android:textColor="@color/midnight_dark"
-        android:textSize="18sp"
-        app:cornerRadius="16dp" />
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>
