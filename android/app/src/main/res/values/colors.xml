@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Midnight Navy Logistics Palette -->
+    <color name="midnight_dark">#0A1128</color>
+    <color name="midnight_primary">#001F54</color>
+    <color name="midnight_surface">#034078</color>
+    <color name="midnight_card">#1282A2</color>
+
+    <!-- Electric Amber & Gold -->
+    <color name="amber_primary">#FFC107</color>
+    <color name="amber_dark">#FFA000</color>
+    <color name="gold_accent">#FBBF24</color>
+
+    <!-- Status Accents -->
+    <color name="emerald_online">#10B981</color>
+    <color name="emerald_glow">#34D399</color>
+    <color name="crimson_stop">#EF4444</color>
+    <color name="crimson_dark">#DC2626</color>
+
+    <!-- Neutrals -->
+    <color name="white">#FFFFFF</color>
+    <color name="slate_100">#F1F5F9</color>
+    <color name="slate_400">#94A3B8</color>
+    <color name="slate_500">#64748B</color>
+    <color name="slate_700">#334155</color>
+    <color name="slate_800">#1E293B</color>
+    <color name="slate_900">#0F172A</color>
+</resources>

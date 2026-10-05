@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Fleet Tracker</string>
+    <string name="start_shift">START SHIFT</string>
+    <string name="end_shift">END SHIFT</string>
+    <string name="bus_id_prompt">Select Bus ID</string>
+    <string name="server_url_label">Fleet Command API Endpoint</string>
+    <string name="speed_unit">km/h</string>
+</resources>

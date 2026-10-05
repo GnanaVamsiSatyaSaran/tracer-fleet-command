@@ -1,0 +1,312 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import 'leaflet-draw/dist/leaflet.draw.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset & Obsidian Palette ─────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0B0F19; /* Obsidian Dark Base */
+  color: #F1F5F9;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* ─── Sleek Obsidian Scrollbars ─────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(11, 15, 25, 0.7);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(39, 53, 73, 0.8);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 75, 102, 0.95);
+}
+
+/* ─── Leaflet Map Engine Overrides (Obsidian Obsidian Theme) ────────── */
+.leaflet-container {
+  background: #0B0F19 !important;
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+  font-family: inherit;
+}
+
+/* High-Contrast Obsidian Dark Map Tiles */
+.leaflet-tile {
+  filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(205deg) saturate(0.25) brightness(0.68);
+}
+
+.leaflet-control-zoom {
+  border: 1px solid rgba(39, 53, 73, 0.8) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7) !important;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(26, 35, 50, 0.9) !important;
+  color: #CBD5E1 !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(39, 53, 73, 0.6) !important;
+  transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(34, 47, 66, 0.95) !important;
+  color: #00F0FF !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(11, 15, 25, 0.85) !important;
+  color: #64748B !important;
+  font-size: 10px;
+  backdrop-filter: blur(8px);
+  border-top-left-radius: 6px;
+  border-left: 1px solid rgba(39, 53, 73, 0.5);
+  border-top: 1px solid rgba(39, 53, 73, 0.5);
+}
+
+.leaflet-control-attribution a {
+  color: #94A3B8 !important;
+}
+
+/* ─── Leaflet Draw Toolbar Customization (Obsidian Dark) ────────────── */
+.leaflet-draw {
+  margin-top: 12px !important;
+}
+
+.leaflet-draw-toolbar {
+  border-radius: 10px !important;
+  overflow: hidden;
+  border: 1px solid rgba(0, 240, 255, 0.35) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65), 0 0 15px rgba(0, 240, 255, 0.2) !important;
+}
+
+.leaflet-draw-toolbar a {
+  background-color: rgba(26, 35, 50, 0.92) !important;
+  border-bottom: 1px solid rgba(39, 53, 73, 0.6) !important;
+  transition: all 0.2s ease;
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+.leaflet-draw-toolbar a:hover {
+  background-color: rgba(34, 47, 66, 1) !important;
+}
+
+.leaflet-draw-actions {
+  left: 36px !important;
+}
+
+.leaflet-draw-actions a {
+  background-color: #1A2332 !important;
+  color: #00F0FF !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(0, 240, 255, 0.3) !important;
+}
+
+/* ─── Radar Wave Bus Marker (Electric Amber #FFB800) ─────────────────── */
+.radar-marker-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+/* Radar pulse wave 1 */
+.radar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #FFB800;
+  background: radial-gradient(circle, rgba(255, 184, 0, 0.3) 0%, rgba(255, 184, 0, 0.05) 60%, transparent 100%);
+  animation: radarWave 2.6s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  pointer-events: none;
+}
+
+/* Radar pulse wave 2 (Delayed phase) */
+.radar-ring-delayed {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #F59E0B;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.04) 60%, transparent 100%);
+  animation: radarWave 2.6s cubic-bezier(0, 0.2, 0.8, 1) 1.3s infinite;
+  pointer-events: none;
+}
+
+/* Radar core pin (Electric Amber) */
+.radar-core {
+  position: relative;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFB800 0%, #D97706 100%);
+  border: 2px solid #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 18px rgba(255, 184, 0, 0.85), 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.radar-core:hover {
+  transform: scale(1.18);
+}
+
+.radar-glyph {
+  color: #0B0F19;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Directional heading needle */
+.radar-heading {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  top: -5px;
+  left: calc(50% - 4px);
+  background: #FFFFFF;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+}
+
+/* Stale / Dead Reckoning Marker State */
+.radar-marker-stale .radar-ring,
+.radar-marker-stale .radar-ring-delayed {
+  display: none;
+}
+
+.radar-marker-stale .radar-core {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  border-color: #EF4444;
+  opacity: 0.55;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+/* Vehicle Floating Tooltip Tag */
+.radar-tag {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26, 35, 50, 0.95);
+  border: 1px solid rgba(255, 184, 0, 0.6);
+  border-radius: 6px;
+  padding: 2px 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: #FFB800;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 12;
+}
+
+.radar-tag-stale {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #F87171;
+}
+
+/* ─── Dynamic Geofences & Boundaries (Neon Cyan #00F0FF) ───────────── */
+.neon-cyan-geofence {
+  stroke: #00F0FF;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 5;
+  fill: rgba(0, 240, 255, 0.12);
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5));
+  animation: cyanGeofencePulse 35s linear infinite;
+}
+
+@keyframes cyanGeofencePulse {
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+
+.krc-geofence-perimeter {
+  stroke: #00F0FF;
+  stroke-width: 2.4;
+  stroke-dasharray: 6 5;
+  fill: rgba(0, 240, 255, 0.10);
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.55));
+  animation: cyanGeofencePulse 30s linear infinite;
+}
+
+/* ─── Route Replay Glowing Polyline ─────────────────────────────────── */
+.replay-route-line {
+  stroke: #00F0FF;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.8));
+}
+
+.replay-route-traversed {
+  stroke: #FFB800;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 12px rgba(255, 184, 0, 0.85));
+}
+
+/* ─── Glassmorphism Panels (Obsidian #1A2332) ───────────────────────── */
+.glass-panel {
+  background: rgba(26, 35, 50, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(39, 53, 73, 0.7);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.75);
+}
+
+.glass-dropdown {
+  background: rgba(26, 35, 50, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85);
+}
+
+/* ─── Animations ────────────────────────────────────────────────────── */
+@keyframes radarWave {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
