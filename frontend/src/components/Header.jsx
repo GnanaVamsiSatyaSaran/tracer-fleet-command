@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import AnimatedCounter from './AnimatedCounter';
+import { SlidersHorizontal } from 'lucide-react';
 
-export default function Header({ wsStatus, vehicleCount, isSimulating }) {
+export default function Header({ wsStatus, vehicleCount, isSimulating, onOpenFleetManager }) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function Header({ wsStatus, vehicleCount, isSimulating }) {
               FLEET COMMAND
             </h1>
             <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 bg-amber-400/10 border border-amber-400/25 px-1.5 py-0.2 rounded">
-              v2.4
+              v2.5
             </span>
           </div>
           <p className="text-[10px] text-slate-400 tracking-wider font-medium flex items-center gap-1.5">
@@ -50,10 +51,10 @@ export default function Header({ wsStatus, vehicleCount, isSimulating }) {
         <span className="font-mono text-amber-400 font-semibold">17.782167, 83.377472 (100m)</span>
       </div>
 
-      {/* ── Right Cluster: Live Clock, Active Units, Status Pill ────── */}
-      <div className="flex items-center gap-4">
+      {/* ── Right Cluster: Live Clock, Active Units, Manage Fleet, Status Pill ────── */}
+      <div className="flex items-center gap-3">
         {/* Real-time Clock */}
-        <div className="hidden sm:flex flex-col text-right">
+        <div className="hidden sm:flex flex-col text-right pr-1">
           <span className="font-mono text-xs font-bold text-slate-200 tabular-nums">
             {currentTime.toLocaleTimeString([], { hour12: false })}
           </span>
@@ -71,6 +72,16 @@ export default function Header({ wsStatus, vehicleCount, isSimulating }) {
           />
           <span className="text-slate-500 text-[10px]">active</span>
         </div>
+
+        {/* Manage Fleet Primary Action Button */}
+        <button
+          onClick={onOpenFleetManager}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-neon/10 border border-cyan-neon/40 text-cyan-neon hover:bg-cyan-neon/20 hover:border-cyan-neon/70 transition-all font-semibold text-xs shadow-cyan-glow/20 active:scale-95"
+          title="Open Vehicle & Driver Asset Management"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-neon" />
+          <span>Manage Fleet</span>
+        </button>
 
         {/* Live Connectivity Pill */}
         <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-mono font-bold ${currentStatus.pill}`}>

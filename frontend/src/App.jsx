@@ -4,12 +4,14 @@ import Header from './components/Header';
 import MapView from './components/MapView';
 import FleetRosterPanel from './components/FleetRosterPanel';
 import ReplayBar from './components/ReplayBar';
+import FleetManagementModal from './components/FleetManagementModal';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function App() {
   const { vehicles, wsStatus, geofenceLog, isSimulating } = useTelemetryWebSocket();
   const [selectedBusId, setSelectedBusId] = useState(null);
+  const [isFleetManagerOpen, setIsFleetManagerOpen] = useState(false);
 
   // ── Dynamic Geofences State ───────────────────────────────────────────
   const [geofences, setGeofences] = useState([]);
@@ -154,6 +156,7 @@ export default function App() {
         wsStatus={wsStatus}
         vehicleCount={vehicles.size}
         isSimulating={isSimulating}
+        onOpenFleetManager={() => setIsFleetManagerOpen(true)}
       />
 
       {/* ── Main Operations Workspace ─────────────────────────────── */}
@@ -208,6 +211,12 @@ export default function App() {
           isLoading={isLoadingReplay}
           selectedDate={replayDate}
           onChangeDate={handleChangeReplayDate}
+        />
+
+        {/* Fleet & Personnel Asset Management Modal */}
+        <FleetManagementModal
+          isOpen={isFleetManagerOpen}
+          onClose={() => setIsFleetManagerOpen(false)}
         />
       </main>
     </div>
