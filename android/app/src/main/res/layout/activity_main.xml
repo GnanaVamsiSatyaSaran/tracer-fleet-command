@@ -97,7 +97,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ── Card 1: Asset & Endpoint Configuration ─────────────────── -->
+            <!-- ── Card 1: Physical Identity Decoupling (QR Scanner) ─────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -124,29 +124,128 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:fontFamily="sans-serif-medium"
-                            android:text="ASSIGNED VEHICLE TRANSPONDER"
+                            android:text="PHYSICAL IDENTITY BINDING"
                             android:textColor="@color/amber_electric"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/tvActiveDriverName"
+                            android:id="@+id/tvBoundStatusBadge"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Captain: Ramesh K."
-                            android:textColor="@color/slate_300"
+                            android:background="@drawable/bg_obsidian_subtle"
+                            android:fontFamily="monospace"
+                            android:paddingHorizontal="6dp"
+                            android:paddingVertical="2dp"
+                            android:text="NOT PAIRED"
+                            android:textColor="@color/slate_400"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Bound Vehicle Box -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_obsidian_subtle"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🚍"
+                            android:textSize="22sp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="VEHICLE TRANSPONDER TAG"
+                                android:textColor="@color/slate_500"
+                                android:textSize="9sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvBoundAssetTag"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="monospace"
+                                android:text="[ SCAN QR TO BIND ]"
+                                android:textColor="@color/amber_electric"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/btnClearVehicleTag"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:padding="6dp"
+                            android:text="✕ Unbind"
+                            android:textColor="@color/crimson_stop"
+                            android:textSize="11sp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <!-- QR Scanner Action Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <!-- Main QR Scan Button (Google ML Kit Vision) -->
+                        <LinearLayout
+                            android:id="@+id/btnScanQr"
+                            android:layout_width="0dp"
+                            android:layout_height="42dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_slider_track"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📷 "
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:letterSpacing="0.05"
+                                android:text="SCAN VEHICLE QR"
+                                android:textColor="@color/amber_electric"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <!-- Quick Tag Fallback Picker -->
+                        <TextView
+                            android:id="@+id/btnQuickTagPicker"
+                            android:layout_width="wrap_content"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_obsidian_subtle"
+                            android:gravity="center"
+                            android:paddingHorizontal="12dp"
+                            android:text="⚡ Quick Tag"
+                            android:textColor="@color/cyan_neon"
                             android:textSize="11sp" />
                     </LinearLayout>
 
-                    <Spinner
-                        android:id="@+id/spinnerBusId"
-                        android:layout_width="match_parent"
-                        android:layout_height="46dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@drawable/bg_obsidian_subtle"
-                        android:popupBackground="@color/obsidian_surface" />
-
-                    <!-- Quick Cloud vs LAN Toggle Chips -->
+                    <!-- Ingestion Endpoint Settings -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -206,7 +305,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Card 2: Live Radar HUD & Speed Telemetry ──────────────── -->
+            <!-- ── Card 2: DFSM HUD & Fused Location Readout ─────────────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -223,10 +322,25 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
+                    <!-- DFSM Operational State Indicator Banner -->
+                    <TextView
+                        android:id="@+id/tvOperationalState"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_obsidian_subtle"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.08"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="5dp"
+                        android:text="AWAITING VEHICLE ASSIGNMENT"
+                        android:textColor="@color/slate_400"
+                        android:textSize="11sp" />
+
                     <!-- Concentric Radar Pulse Ring Frame -->
                     <FrameLayout
                         android:layout_width="110dp"
-                        android:layout_height="110dp">
+                        android:layout_height="110dp"
+                        android:layout_marginTop="12dp">
 
                         <com.tracer.fleettracker.ui.RadarPulseView
                             android:id="@+id/radarPulseView"
@@ -240,21 +354,6 @@
                             android:text="🚌"
                             android:textSize="22sp" />
                     </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tvTransmittingHudTag"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:background="@drawable/bg_obsidian_subtle"
-                        android:fontFamily="monospace"
-                        android:letterSpacing="0.08"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="3dp"
-                        android:text="TRANSPONDER STANDBY"
-                        android:textColor="@color/slate_400"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
 
                     <!-- Current Ground Speed Readout -->
                     <LinearLayout
@@ -284,13 +383,36 @@
                             android:textSize="16sp" />
                     </LinearLayout>
 
+                    <!-- Campus Layover / Transit Toggle Action -->
+                    <LinearLayout
+                        android:id="@+id/btnToggleLayover"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="@drawable/bg_obsidian_subtle"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="6dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tvLayoverActionLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="monospace"
+                            android:text="⏸️ Enter Campus Layover (Privacy Mode)"
+                            android:textColor="@color/cyan_neon"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="12dp"
                         android:background="@color/obsidian_border" />
 
-                    <!-- Coordinates and Accuracy -->
+                    <!-- Coordinates and Fused Accuracy -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -305,7 +427,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="GPS COORDINATES"
+                                android:text="FUSED GNSS / CELLULAR"
                                 android:textColor="@color/slate_500"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />

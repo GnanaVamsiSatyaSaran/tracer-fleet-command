@@ -3,7 +3,6 @@ package com.tracer.fleettracker.ui
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -18,6 +17,7 @@ import com.tracer.fleettracker.R
 /**
  * Enterprise Swipe-to-Confirm Slider Component.
  * Eliminates accidental driver shift activation while operating moving vehicles.
+ * Supports Physical Identity Decoupling: Stays locked until a valid vehicle QR code is scanned.
  */
 class SwipeSliderView @JvmOverloads constructor(
     context: Context,
@@ -30,12 +30,14 @@ class SwipeSliderView @JvmOverloads constructor(
     private val thumbView: ImageView
 
     private var isShiftActive: Boolean = false
+    private var isScanLocked: Boolean = true
     private var isDragging: Boolean = false
     private var initialTouchX: Float = 0f
     private var currentThumbX: Float = 0f
     private var maxDragDistance: Float = 0f
 
     var onSwipeCompleteListener: (() -> Unit)? = null
+    var onLockedTouchListener: (() -> Unit)? = null
 
     init {
         // Build Track Layout
@@ -47,9 +49,9 @@ class SwipeSliderView @JvmOverloads constructor(
 
         // Center Action Hint Label
         hintTextView = TextView(context).apply {
-            text = ">>> SWIPE TO START SHIFT >>>"
-            setTextColor(ContextCompat.getColor(context, R.color.amber_electric))
-            textSize = 13f
+            text = "🔒 SCAN VEHICLE QR TO UNLOCK"
+            setTextColor(ContextCompat.getColor(context, R.color.slate_500))
+            textSize = 12f
             typeface = android.graphics.Typeface.DEFAULT_BOLD
             letterSpacing = 0.08f
             gravity = android.view.Gravity.CENTER
@@ -66,11 +68,14 @@ class SwipeSliderView @JvmOverloads constructor(
             }
             background = ContextCompat.getDrawable(context, R.drawable.bg_slider_thumb)
             scaleType = ImageView.ScaleType.CENTER_INSIDE
-            setImageResource(android.R.drawable.ic_media_play)
+            setImageResource(android.R.drawable.ic_lock_lock)
             setColorFilter(ContextCompat.getColor(context, R.color.obsidian_bg))
             elevation = 8f * resources.displayMetrics.density
+            alpha = 0.45f
         }
         addView(thumbView)
+
+        alpha = 0.7f
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -81,9 +86,16 @@ class SwipeSliderView @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (isScanLocked) {
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                onLockedTouchListener?.invoke()
+            }
+            return true
+        }
+
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                // Ensure touch starts near current thumb position
                 val thumbLeft = thumbView.x
                 val thumbRight = thumbLeft + thumbView.width
                 if (event.x in (thumbLeft - 40f)..(thumbRight + 40f)) {
@@ -99,7 +111,6 @@ class SwipeSliderView @JvmOverloads constructor(
                     currentThumbX = newX
                     thumbView.translationX = newX
 
-                    // Fade out hint text proportionally
                     val progress = if (maxDragDistance > 0) newX / maxDragDistance else 0f
                     hintTextView.alpha = (1f - (progress * 1.5f)).coerceAtLeast(0f)
                     return true
@@ -112,14 +123,12 @@ class SwipeSliderView @JvmOverloads constructor(
                     val progress = if (maxDragDistance > 0) currentThumbX / maxDragDistance else 0f
 
                     if (progress >= 0.80f) {
-                        // Complete Swipe Confirmation
                         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                         snapTo(maxDragDistance) {
                             onSwipeCompleteListener?.invoke()
                             resetThumb(animated = true)
                         }
                     } else {
-                        // Spring Snap-Back
                         resetThumb(animated = true)
                     }
                     return true
@@ -133,9 +142,7 @@ class SwipeSliderView @JvmOverloads constructor(
         ValueAnimator.ofFloat(thumbView.translationX, targetX).apply {
             duration = 150
             interpolator = DecelerateInterpolator()
-            addUpdateListener { anim ->
-                thumbView.translationX = anim.animatedValue as Float
-            }
+            addUpdateListener { anim -> thumbView.translationX = anim.animatedValue as Float }
             addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
                     onEnd?.invoke()
@@ -164,8 +171,35 @@ class SwipeSliderView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Toggles lock status based on physical QR vehicle binding.
+     */
+    fun setScanLocked(locked: Boolean) {
+        isScanLocked = locked
+        if (locked) {
+            alpha = 0.7f
+            thumbView.alpha = 0.45f
+            thumbView.setImageResource(android.R.drawable.ic_lock_lock)
+            thumbView.backgroundTintList = null
+            hintTextView.text = "🔒 SCAN VEHICLE QR TO UNLOCK"
+            hintTextView.setTextColor(ContextCompat.getColor(context, R.color.slate_500))
+        } else {
+            alpha = 1.0f
+            thumbView.alpha = 1.0f
+            setShiftActive(isShiftActive)
+        }
+        resetThumb(animated = false)
+    }
+
+    fun isLocked(): Boolean = isScanLocked
+
     fun setShiftActive(active: Boolean) {
         isShiftActive = active
+        if (isScanLocked) {
+            setScanLocked(true)
+            return
+        }
+
         if (active) {
             hintTextView.text = "<<< SWIPE TO END SHIFT <<<"
             hintTextView.setTextColor(ContextCompat.getColor(context, R.color.crimson_stop))

@@ -10,19 +10,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.BatteryManager
 import android.os.Build
-import android.os.Bundle
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.tracer.fleettracker.R
 import com.tracer.fleettracker.data.local.AppDatabase
 import com.tracer.fleettracker.data.local.TelemetryEntity
@@ -44,9 +48,16 @@ import java.util.UUID
 
 /**
  * High-reliability Persistent Location Tracking Foreground Service.
- * Bypasses Android battery throttling via Foreground Service type="location" & Partial WakeLock.
+ * Refactored to Google Play Services FusedLocationProviderClient with PRIORITY_HIGH_ACCURACY (5000ms).
+ * Provides seamless GNSS -> Wi-Fi/Cellular failover in tunnels and underpasses.
  */
-class LocationService : Service(), LocationListener {
+class LocationService : Service() {
+
+    enum class OperationalState(val label: String, val badgeColor: Int) {
+        STANDBY("AWAITING VEHICLE ASSIGNMENT", R.color.slate_400),
+        INBOUND_TRANSIT("ACTIVE: INBOUND ROUTE", R.color.amber_electric),
+        CAMPUS_LAYOVER("LAYOVER: TRACKING SUSPENDED", R.color.cyan_neon)
+    }
 
     companion object {
         private const val TAG = "LocationService"
@@ -55,12 +66,15 @@ class LocationService : Service(), LocationListener {
 
         const val ACTION_START = "ACTION_START_SHIFT"
         const val ACTION_STOP = "ACTION_STOP_SHIFT"
+        const val ACTION_SET_LAYOVER = "ACTION_SET_LAYOVER"
         const val EXTRA_ASSET_ID = "EXTRA_ASSET_ID"
         const val EXTRA_SERVER_URL = "EXTRA_SERVER_URL"
+        const val EXTRA_IS_LAYOVER = "EXTRA_IS_LAYOVER"
 
         // Observable Live Telemetry State for UI Binding
         data class ServiceState(
             val isTracking: Boolean = false,
+            val operationalState: OperationalState = OperationalState.STANDBY,
             val assetId: String = "GITAM-BUS-01",
             val latitude: Double = 0.0,
             val longitude: Double = 0.0,
@@ -79,8 +93,9 @@ class LocationService : Service(), LocationListener {
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private lateinit var database: AppDatabase
     private lateinit var uploader: TelemetryUploader
-    private lateinit var locationManager: LocationManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var connectivityManager: ConnectivityManager
+    private var locationCallback: LocationCallback? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
     private var activeAssetId: String = "GITAM-BUS-01"
@@ -96,7 +111,7 @@ class LocationService : Service(), LocationListener {
         super.onCreate()
         database = AppDatabase.getInstance(applicationContext)
         uploader = TelemetryUploader(applicationContext)
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         createNotificationChannel()
@@ -115,43 +130,50 @@ class LocationService : Service(), LocationListener {
             ACTION_STOP -> {
                 stopTracking()
             }
+            ACTION_SET_LAYOVER -> {
+                val isLayover = intent.getBooleanExtra(EXTRA_IS_LAYOVER, false)
+                toggleLayoverMode(isLayover)
+            }
         }
         return START_STICKY
     }
 
     @SuppressLint("MissingPermission")
     private fun startTracking() {
-        startForeground(NOTIFICATION_ID, buildNotification("Shift Active — Monitoring GPS"))
+        startForeground(NOTIFICATION_ID, buildNotification("Active: Inbound Route • $activeAssetId"))
 
         _serviceState.value = _serviceState.value.copy(
             isTracking = true,
+            operationalState = OperationalState.INBOUND_TRANSIT,
             assetId = activeAssetId
         )
 
-        try {
-            // Request high-accuracy GNSS updates every 2 seconds or 1 meter
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    2000L,
-                    1.0f,
-                    this
-                )
+        // Google Play Services: FusedLocationProviderClient Anti-Degradation Request
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
+            .setMinUpdateIntervalMillis(2000L)
+            .setMinUpdateDistanceMeters(1.0f)
+            .setWaitForAccurateLocation(false)
+            .build()
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                val location = locationResult.lastLocation ?: return
+                handleNewLocation(location)
             }
-            if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER,
-                    3000L,
-                    2.0f,
-                    this
-                )
-            }
-            Log.i(TAG, "Hardware GPS listeners registered successfully for asset: $activeAssetId")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to register location updates: ${e.localizedMessage}")
         }
 
-        // Start observation of pending SQLite cache count
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback!!,
+                Looper.getMainLooper()
+            )
+            Log.i(TAG, "FusedLocationProviderClient polling at 5000ms HIGH_ACCURACY for $activeAssetId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to register FusedLocationProviderClient: ${e.localizedMessage}")
+        }
+
+        // Observe pending local SQLite Room cache count
         serviceScope.launch {
             database.telemetryDao().observeUnsyncedCount().collect { count ->
                 _serviceState.value = _serviceState.value.copy(unsyncedCount = count)
@@ -159,24 +181,40 @@ class LocationService : Service(), LocationListener {
         }
     }
 
-    private fun stopTracking() {
-        try {
-            locationManager.removeUpdates(this)
-        } catch (e: Exception) {
-            Log.w(TAG, "Error removing location updates: ${e.localizedMessage}")
-        }
+    private fun toggleLayoverMode(isLayover: Boolean) {
+        val newState = if (isLayover) OperationalState.CAMPUS_LAYOVER else OperationalState.INBOUND_TRANSIT
+        _serviceState.value = _serviceState.value.copy(operationalState = newState)
 
-        _serviceState.value = _serviceState.value.copy(isTracking = false)
+        val notificationMsg = if (isLayover) {
+            "Campus Layover: Tracking Suspended (Privacy Mode)"
+        } else {
+            "Active: Inbound Route • $activeAssetId"
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, buildNotification(notificationMsg))
+        Log.i(TAG, "DFSM Operational state transitioned to: ${newState.name}")
+    }
+
+    private fun stopTracking() {
+        locationCallback?.let {
+            fusedLocationClient.removeLocationUpdates(it)
+        }
+        locationCallback = null
+
+        _serviceState.value = _serviceState.value.copy(
+            isTracking = false,
+            operationalState = OperationalState.STANDBY
+        )
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
-    // ── Anti-Spoofing GNSS Validation ──────────────────────────────────────
+    // ── Anti-Spoofing GNSS Hardware Validation ─────────────────────────────
     /**
      * Checks if a GPS coordinate is generated by a mock location provider.
-     * Android 12+ (API 31+): location.isMock()
-     * Android 11 and below: location.isFromMockProvider()
+     * Android 12+ (API 31+): location.isMock
+     * Android 11 and below: location.isFromMockProvider
      */
     private fun isLocationSpoofed(location: Location): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -187,7 +225,7 @@ class LocationService : Service(), LocationListener {
         }
     }
 
-    override fun onLocationChanged(location: Location) {
+    private fun handleNewLocation(location: Location) {
         // Strict Anti-Spoofing Security Verification
         if (isLocationSpoofed(location)) {
             spoofRejections++
@@ -202,6 +240,7 @@ class LocationService : Service(), LocationListener {
         val batteryPct = getBatteryPercentage()
         val timestampIso = isoDateFormat.format(Date(location.time))
 
+        // Update In-Memory Reactive State
         _serviceState.value = _serviceState.value.copy(
             latitude = location.latitude,
             longitude = location.longitude,
@@ -211,9 +250,16 @@ class LocationService : Service(), LocationListener {
             lastUpdated = System.currentTimeMillis()
         )
 
-        updateNotification(speedKmh, location.latitude, location.longitude)
+        // Privacy Lock: In CAMPUS_LAYOVER state, GPS streaming and logging are suspended!
+        if (_serviceState.value.operationalState == OperationalState.CAMPUS_LAYOVER) {
+            updateNotification(0.0, location.latitude, location.longitude, isLayover = true)
+            Log.d(TAG, "Campus layover active; telemetry ingestion deferred for privacy.")
+            return
+        }
 
-        // Store-and-Forward: Save to Room, then trigger immediate upload attempt
+        updateNotification(speedKmh, location.latitude, location.longitude, isLayover = false)
+
+        // Store-and-Forward: Save to Room SQLite, then trigger immediate upload attempt
         serviceScope.launch {
             val entity = TelemetryEntity(
                 assetId = activeAssetId,
@@ -232,7 +278,7 @@ class LocationService : Service(), LocationListener {
             val insertedId = database.telemetryDao().insert(entity)
             val persistedEntity = entity.copy(id = insertedId)
 
-            // 2. Immediate direct upload attempt
+            // 2. Direct upload attempt via HTTP POST to cloud backend
             val isSuccess = uploader.uploadBatch(serverEndpoint, listOf(persistedEntity))
             if (isSuccess) {
                 database.telemetryDao().markAsSynced(listOf(insertedId))
@@ -325,11 +371,15 @@ class LocationService : Service(), LocationListener {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(pendingIntent)
             .build()
-    }
+        }
 
-    private fun updateNotification(speedKmh: Double, lat: Double, lng: Double) {
-        val formattedSpeed = String.format(Locale.US, "%.1f km/h", speedKmh)
-        val text = "Speed: $formattedSpeed | Lat: ${String.format(Locale.US, "%.5f", lat)}, Lon: ${String.format(Locale.US, "%.5f", lng)}"
+    private fun updateNotification(speedKmh: Double, lat: Double, lng: Double, isLayover: Boolean) {
+        val text = if (isLayover) {
+            "⏸️ Layover Mode: Tracking Suspended (Privacy Mode)"
+        } else {
+            val formattedSpeed = String.format(Locale.US, "%.1f km/h", speedKmh)
+            "Speed: $formattedSpeed | Lat: ${String.format(Locale.US, "%.5f", lat)}, Lon: ${String.format(Locale.US, "%.5f", lng)}"
+        }
         val manager = getSystemService(NotificationManager::class.java)
         manager?.notify(NOTIFICATION_ID, buildNotification(text))
     }
@@ -341,9 +391,4 @@ class LocationService : Service(), LocationListener {
         serviceScope.cancel()
         releaseWakeLock()
     }
-
-    @Deprecated("Deprecated in Java")
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-    override fun onProviderEnabled(provider: String) {}
-    override fun onProviderDisabled(provider: String) {}
 }

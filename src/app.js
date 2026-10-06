@@ -45,6 +45,13 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Download Driver App APK Endpoint
+const path = require('path');
+app.get(['/download/apk', '/FleetTracker-v2.5.apk'], (req, res) => {
+  const apkPath = path.join(__dirname, '..', 'FleetTracker-v2.5.apk');
+  res.download(apkPath, 'FleetTracker-v2.5.apk');
+});
+
 // Mount Production API Routes
 app.use('/api', telemetryRoutes);
 app.use('/api', geofenceRoutes);

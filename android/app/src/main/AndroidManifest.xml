@@ -11,6 +11,10 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
+    <!-- Camera Permission for Google ML Kit QR Scanner -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
     <!-- Foreground Service Requirements for Android 10 (API 29) through Android 14 (API 34) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
@@ -31,6 +35,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
 
+        <!-- Google ML Kit Barcode Model Automatic Preparation -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode" />
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
@@ -41,6 +50,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Google ML Kit QR Scanner Viewfinder Activity -->
+        <activity
+            android:name=".ui.QrScannerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.FleetTracker" />
 
         <!-- Persistent Location Tracking Foreground Service with explicit 'location' type -->
         <service

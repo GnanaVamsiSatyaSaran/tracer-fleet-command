@@ -73,6 +73,17 @@ export default function Header({ wsStatus, vehicleCount, isSimulating, onOpenFle
           <span className="text-slate-500 text-[10px]">active</span>
         </div>
 
+        {/* Download Driver App APK */}
+        <a
+          href="/FleetTracker-v2.5.apk"
+          download="FleetTracker-v2.5.apk"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/10 border border-amber-400/40 text-amber-400 hover:bg-amber-400/20 hover:border-amber-400/70 transition-all font-semibold text-xs shadow-amber-glow/20 active:scale-95"
+          title="Download Android Driver Tracker APK (v2.5)"
+        >
+          <span>📱</span>
+          <span>Download App</span>
+        </a>
+
         {/* Manage Fleet Primary Action Button */}
         <button
           onClick={onOpenFleetManager}

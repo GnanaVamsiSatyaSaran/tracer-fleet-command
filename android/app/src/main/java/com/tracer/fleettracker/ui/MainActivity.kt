@@ -14,9 +14,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.widget.ArrayAdapter
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -29,15 +30,19 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * Driver Console UI: High-contrast Obsidian Dark HUD Emitter Dashboard.
- * Designed for professional transit operations, zero accidental taps, and real-time GNSS telemetry.
+ * Enterprise Driver Console HUD:
+ * - Feature 1: Physical Identity Decoupling (Google ML Kit Vision QR Scanner)
+ * - Feature 2: Anti-Degradation Location Tracking via Google Play Services FusedLocationProviderClient
+ * - Feature 3: Deterministic Finite State Machine (DFSM) Heads-Up Display
  */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private var isShiftActive = false
+    private var isLayoverActive = false
+    private var boundAssetTag: String? = null
 
-    private val busOptions = arrayOf(
+    private val fallbackBusTags = arrayOf(
         "GITAM-BUS-01",
         "GITAM-BUS-02",
         "GITAM-BUS-03",
@@ -48,7 +53,19 @@ class MainActivity : AppCompatActivity() {
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
-    // Runtime Permission Request Contract
+    // Google ML Kit QR Scanner Contract
+    private val qrScanLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val scannedTag = result.data?.getStringExtra(QrScannerActivity.EXTRA_ASSET_TAG)
+            if (!scannedTag.isNullOrBlank()) {
+                bindVehicleIdentity(scannedTag)
+            }
+        }
+    }
+
+    // Runtime Permission Request Contract (GNSS & Notifications)
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -59,7 +76,6 @@ class MainActivity : AppCompatActivity() {
             proceedToggleShift()
         } else {
             Toast.makeText(this, "Precise GNSS/GPS permission required for fleet tracking", Toast.LENGTH_LONG).show()
-            binding.swipeSliderShift.setShiftActive(false)
         }
     }
 
@@ -68,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupBusSpinner()
+        setupInitialState()
         setupServerUrl()
         setupListeners()
         observeServiceState()
@@ -76,9 +92,10 @@ class MainActivity : AppCompatActivity() {
         checkBatteryOptimizationStatus()
     }
 
-    private fun setupBusSpinner() {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, busOptions)
-        binding.spinnerBusId.adapter = adapter
+    private fun setupInitialState() {
+        // Feature 1: Physical Identity Decoupling - Stays locked until QR Code scan binds the phone
+        binding.swipeSliderShift.setScanLocked(true)
+        updateBoundVehicleDisplay(null)
     }
 
     private fun setupServerUrl() {
@@ -87,9 +104,49 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        // Interactive Swipe-to-Start Shift Component
+        // Feature 1: QR Scanner Action
+        binding.btnScanQr.setOnClickListener {
+            if (isShiftActive) {
+                Toast.makeText(this, "Conclude current shift before pairing another vehicle", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val intent = Intent(this, QrScannerActivity::class.java)
+            qrScanLauncher.launch(intent)
+        }
+
+        // Quick Tag Manual Override Picker
+        binding.btnQuickTagPicker.setOnClickListener {
+            if (isShiftActive) {
+                Toast.makeText(this, "Conclude current shift before re-assigning vehicle", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            showQuickTagDialog()
+        }
+
+        // Clear / Unbind Vehicle
+        binding.btnClearVehicleTag.setOnClickListener {
+            if (isShiftActive) return@setOnClickListener
+            bindVehicleIdentity(null)
+        }
+
+        // Feature 1: Interactive Swipe Slider
         binding.swipeSliderShift.onSwipeCompleteListener = {
             checkPermissionsAndToggleShift()
+        }
+
+        binding.swipeSliderShift.onLockedTouchListener = {
+            Toast.makeText(this, "Scan vehicle QR code first to unlock transponder", Toast.LENGTH_SHORT).show()
+        }
+
+        // Feature 3: DFSM Campus Layover Toggle Action
+        binding.btnToggleLayover.setOnClickListener {
+            if (!isShiftActive) return@setOnClickListener
+            isLayoverActive = !isLayoverActive
+            val intent = Intent(this, LocationService::class.java).apply {
+                action = LocationService.ACTION_SET_LAYOVER
+                putExtra(LocationService.EXTRA_IS_LAYOVER, isLayoverActive)
+            }
+            startService(intent)
         }
 
         // Quick Ingestion Target Switchers
@@ -107,6 +164,47 @@ class MainActivity : AppCompatActivity() {
         binding.btnBatteryOpt.setOnClickListener {
             requestBatteryOptimizationExemption()
         }
+    }
+
+    private fun bindVehicleIdentity(tag: String?) {
+        boundAssetTag = tag
+        updateBoundVehicleDisplay(tag)
+
+        if (tag != null) {
+            // Unlock the Swipe-to-Start Shift slider
+            binding.swipeSliderShift.setScanLocked(false)
+            Toast.makeText(this, "Phone Bound to Vehicle: $tag", Toast.LENGTH_SHORT).show()
+        } else {
+            // Lock the slider
+            binding.swipeSliderShift.setScanLocked(true)
+            Toast.makeText(this, "Vehicle Unpaired", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateBoundVehicleDisplay(tag: String?) {
+        if (tag != null) {
+            binding.tvBoundAssetTag.text = tag
+            binding.tvBoundAssetTag.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
+            binding.tvBoundStatusBadge.text = "PAIRED"
+            binding.tvBoundStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
+            binding.btnClearVehicleTag.visibility = if (isShiftActive) View.GONE else View.VISIBLE
+        } else {
+            binding.tvBoundAssetTag.text = "[ SCAN QR TO BIND ]"
+            binding.tvBoundAssetTag.setTextColor(ContextCompat.getColor(this, R.color.slate_500))
+            binding.tvBoundStatusBadge.text = "NOT PAIRED"
+            binding.tvBoundStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+            binding.btnClearVehicleTag.visibility = View.GONE
+        }
+    }
+
+    private fun showQuickTagDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Select Vehicle Transponder")
+            .setItems(fallbackBusTags) { _, which ->
+                bindVehicleIdentity(fallbackBusTags[which])
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun checkPermissionsAndToggleShift() {
@@ -131,7 +229,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun proceedToggleShift() {
-        val selectedBusId = binding.spinnerBusId.selectedItem?.toString() ?: "GITAM-BUS-01"
+        val assetId = boundAssetTag ?: run {
+            Toast.makeText(this, "Please scan vehicle QR code first", Toast.LENGTH_SHORT).show()
+            binding.swipeSliderShift.setScanLocked(true)
+            return
+        }
+
         val serverEndpoint = binding.etServerUrl.text.toString().trim().ifEmpty {
             TelemetryUploader.DEFAULT_SERVER_URL
         }
@@ -142,16 +245,18 @@ class MainActivity : AppCompatActivity() {
                 action = LocationService.ACTION_STOP
             }
             startService(intent)
-            Toast.makeText(this, "Shift Ended: $selectedBusId offline", Toast.LENGTH_SHORT).show()
+            isLayoverActive = false
+            Toast.makeText(this, "Shift Ended: $assetId transponder offline", Toast.LENGTH_SHORT).show()
         } else {
             // Start Shift
+            isLayoverActive = false
             val intent = Intent(this, LocationService::class.java).apply {
                 action = LocationService.ACTION_START
-                putExtra(LocationService.EXTRA_ASSET_ID, selectedBusId)
+                putExtra(LocationService.EXTRA_ASSET_ID, assetId)
                 putExtra(LocationService.EXTRA_SERVER_URL, serverEndpoint)
             }
             ContextCompat.startForegroundService(this, intent)
-            Toast.makeText(this, "Shift Started: Transmitting live GPS for $selectedBusId", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Shift Started: Live tracking for $assetId", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -159,6 +264,10 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             LocationService.serviceState.collectLatest { state ->
                 isShiftActive = state.isTracking
+                if (state.isTracking && boundAssetTag == null) {
+                    boundAssetTag = state.assetId
+                    updateBoundVehicleDisplay(state.assetId)
+                }
                 updateUiForShiftState(state)
             }
         }
@@ -166,40 +275,74 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun updateUiForShiftState(state: LocationService.Companion.ServiceState) {
-        // Sync interactive slider and radar HUD
-        binding.swipeSliderShift.setShiftActive(state.isTracking)
-        binding.radarPulseView.setPulsing(state.isTracking)
-
-        if (state.isTracking) {
-            // Live Transmitting State
-            binding.tvLiveStatusBadge.text = "TRANSMITTING"
-            binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
-
-            binding.tvTransmittingHudTag.text = "TRANSMITTING LIVE GPS"
-            binding.tvTransmittingHudTag.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
-
-            binding.spinnerBusId.isEnabled = false
-            binding.etServerUrl.isEnabled = false
-            binding.btnSetCloudUrl.isEnabled = false
-            binding.btnSetLocalUrl.isEnabled = false
+        // Sync interactive slider and lock state
+        if (boundAssetTag != null) {
+            binding.swipeSliderShift.setScanLocked(false)
+            binding.swipeSliderShift.setShiftActive(state.isTracking)
         } else {
-            // Standby State
-            binding.tvLiveStatusBadge.text = "STANDBY"
-            binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+            binding.swipeSliderShift.setScanLocked(true)
+        }
 
-            binding.tvTransmittingHudTag.text = "TRANSPONDER STANDBY"
-            binding.tvTransmittingHudTag.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+        // Feature 3: DFSM Heads-Up Display (State Machine UI)
+        val opState = state.operationalState
+        binding.tvOperationalState.text = opState.label
+        binding.tvOperationalState.setTextColor(ContextCompat.getColor(this, opState.badgeColor))
 
-            binding.spinnerBusId.isEnabled = true
-            binding.etServerUrl.isEnabled = true
-            binding.btnSetCloudUrl.isEnabled = true
-            binding.btnSetLocalUrl.isEnabled = true
+        when (opState) {
+            LocationService.OperationalState.STANDBY -> {
+                binding.radarPulseView.setPulsing(false)
+                binding.tvLiveStatusBadge.text = "STANDBY"
+                binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+
+                binding.btnToggleLayover.visibility = View.GONE
+                binding.btnScanQr.isEnabled = true
+                binding.btnScanQr.alpha = 1.0f
+                binding.btnClearVehicleTag.visibility = if (boundAssetTag != null) View.VISIBLE else View.GONE
+                binding.etServerUrl.isEnabled = true
+                binding.btnSetCloudUrl.isEnabled = true
+                binding.btnSetLocalUrl.isEnabled = true
+            }
+
+            LocationService.OperationalState.INBOUND_TRANSIT -> {
+                binding.radarPulseView.setPulsing(true)
+                binding.tvLiveStatusBadge.text = "TRANSMITTING"
+                binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
+
+                binding.btnToggleLayover.visibility = View.VISIBLE
+                binding.tvLayoverActionLabel.text = "⏸️ Enter Campus Layover (Privacy Mode)"
+                binding.tvLayoverActionLabel.setTextColor(ContextCompat.getColor(this, R.color.cyan_neon))
+
+                binding.btnScanQr.isEnabled = false
+                binding.btnScanQr.alpha = 0.5f
+                binding.btnClearVehicleTag.visibility = View.GONE
+                binding.etServerUrl.isEnabled = false
+                binding.btnSetCloudUrl.isEnabled = false
+                binding.btnSetLocalUrl.isEnabled = false
+            }
+
+            LocationService.OperationalState.CAMPUS_LAYOVER -> {
+                // Privacy Mode: Pulse paused to assure driver
+                binding.radarPulseView.setPulsing(false)
+                binding.tvLiveStatusBadge.text = "SUSPENDED"
+                binding.tvLiveStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.cyan_neon))
+
+                binding.btnToggleLayover.visibility = View.VISIBLE
+                binding.tvLayoverActionLabel.text = "▶️ Resume Inbound Route"
+                binding.tvLayoverActionLabel.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
+
+                binding.btnScanQr.isEnabled = false
+                binding.btnScanQr.alpha = 0.5f
+                binding.btnClearVehicleTag.visibility = View.GONE
+                binding.etServerUrl.isEnabled = false
+                binding.btnSetCloudUrl.isEnabled = false
+                binding.btnSetLocalUrl.isEnabled = false
+            }
         }
 
         // Live Ground Speed
         binding.tvLiveSpeed.text = String.format(Locale.US, "%.1f", state.speedKmh)
 
-        // Coordinates & GNSS Accuracy
+        // Coordinates & Fused Accuracy
         if (state.latitude != 0.0 || state.longitude != 0.0) {
             binding.tvCoordinates.text = String.format(
                 Locale.US,
@@ -210,7 +353,7 @@ class MainActivity : AppCompatActivity() {
             binding.tvAccuracy.text = "±${String.format(Locale.US, "%.1f", state.accuracy)}m"
             binding.tvAccuracy.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
         } else {
-            binding.tvCoordinates.text = "Awaiting GNSS lock…"
+            binding.tvCoordinates.text = "Awaiting GNSS / Fused Lock…"
             binding.tvAccuracy.text = "± -- m"
             binding.tvAccuracy.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
         }
@@ -224,12 +367,12 @@ class MainActivity : AppCompatActivity() {
             binding.tvAntiSpoofStatus.setTextColor(ContextCompat.getColor(this, R.color.emerald_online))
         }
 
-        // Store-and-Forward SQLite Backlog Count
+        // Store-and-Forward SQLite Backlog Queue
         binding.tvOfflineQueue.text = "${state.unsyncedCount} pending records"
         if (state.unsyncedCount > 0) {
             binding.tvOfflineQueue.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
         } else {
-            binding.tvOfflineQueue.setTextColor(ContextCompat.getColor(this, R.color.slate_400))
+            binding.tvOfflineQueue.setTextColor(ContextCompat.getColor(this, R.color.amber_electric))
         }
     }
 
