@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/obsidian_bg"
+    android:background="@color/charcoal_bg"
     android:orientation="vertical"
-    android:padding="18dp">
+    android:padding="16dp">
 
     <!-- ── Top Enterprise Header Bar ──────────────────────────────────────── -->
     <LinearLayout
@@ -14,22 +14,27 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingBottom="14dp">
+        android:paddingBottom="12dp">
 
-        <TextView
+        <FrameLayout
             android:layout_width="38dp"
             android:layout_height="38dp"
-            android:background="@drawable/bg_slider_thumb"
-            android:gravity="center"
-            android:text="⚡"
-            android:textColor="@color/obsidian_bg"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:background="@drawable/bg_gradient_indigo_purple">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="⚡"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -46,41 +51,56 @@
                     android:letterSpacing="0.05"
                     android:text="FLEET TRACKER"
                     android:textColor="@color/white"
-                    android:textSize="18sp" />
+                    android:textSize="17sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_obsidian_subtle"
+                    android:background="@drawable/bg_gradient_indigo_purple"
                     android:fontFamily="monospace"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="1dp"
-                    android:text="v2.5"
-                    android:textColor="@color/amber_electric"
+                    android:text="v3.0"
+                    android:textColor="@color/white"
                     android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tvDriverProfileBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="GITAM Campus Transit • Driver Emitter"
-                android:textColor="@color/slate_400"
+                android:text="Captain: Ramesh Kumar (DRV-8821)"
+                android:textColor="@color/indigo_accent"
                 android:textSize="11sp" />
         </LinearLayout>
+
+        <!-- Driver Sign Out Button -->
+        <TextView
+            android:id="@+id/btnSignOut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_input_field"
+            android:fontFamily="monospace"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:text="Sign Out"
+            android:textColor="@color/slate_400"
+            android:textSize="10sp" />
 
         <TextView
             android:id="@+id/tvLiveStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_obsidian_subtle"
+            android:background="@drawable/bg_input_field"
             android:fontFamily="monospace"
             android:paddingHorizontal="10dp"
             android:paddingVertical="5dp"
             android:text="STANDBY"
             android:textColor="@color/slate_400"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -101,15 +121,15 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
-                app:cardBackgroundColor="@color/obsidian_surface"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/charcoal_card"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_obsidian_card"
+                    android:background="@drawable/bg_neomorphic_card"
                     android:orientation="vertical"
                     android:padding="16dp">
 
@@ -124,8 +144,8 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:fontFamily="sans-serif-medium"
-                            android:text="PHYSICAL IDENTITY BINDING"
-                            android:textColor="@color/amber_electric"
+                            android:text="PHYSICAL IDENTITY DECOUPLING"
+                            android:textColor="@color/indigo_accent"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -133,9 +153,9 @@
                             android:id="@+id/tvBoundStatusBadge"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/bg_obsidian_subtle"
+                            android:background="@drawable/bg_input_field"
                             android:fontFamily="monospace"
-                            android:paddingHorizontal="6dp"
+                            android:paddingHorizontal="8dp"
                             android:paddingVertical="2dp"
                             android:text="NOT PAIRED"
                             android:textColor="@color/slate_400"
@@ -148,7 +168,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_obsidian_subtle"
+                        android:background="@drawable/bg_input_field"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:padding="12dp">
@@ -209,9 +229,9 @@
                         <LinearLayout
                             android:id="@+id/btnScanQr"
                             android:layout_width="0dp"
-                            android:layout_height="42dp"
+                            android:layout_height="44dp"
                             android:layout_weight="1"
-                            android:background="@drawable/bg_slider_track"
+                            android:background="@drawable/bg_gradient_indigo_purple"
                             android:gravity="center"
                             android:orientation="horizontal">
 
@@ -227,20 +247,20 @@
                                 android:fontFamily="sans-serif-black"
                                 android:letterSpacing="0.05"
                                 android:text="SCAN VEHICLE QR"
-                                android:textColor="@color/amber_electric"
+                                android:textColor="@color/white"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
-                        <!-- Quick Tag Fallback Picker -->
+                        <!-- Dynamic Cloud Fleet Selector -->
                         <TextView
-                            android:id="@+id/btnQuickTagPicker"
+                            android:id="@+id/btnDynamicBusPicker"
                             android:layout_width="wrap_content"
-                            android:layout_height="42dp"
+                            android:layout_height="44dp"
                             android:layout_marginStart="8dp"
-                            android:background="@drawable/bg_obsidian_subtle"
+                            android:background="@drawable/bg_input_field"
                             android:gravity="center"
                             android:paddingHorizontal="12dp"
-                            android:text="⚡ Quick Tag"
+                            android:text="☁️ Cloud Fleet"
                             android:textColor="@color/cyan_neon"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -267,7 +287,7 @@
                             android:id="@+id/btnSetCloudUrl"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/bg_obsidian_subtle"
+                            android:background="@drawable/bg_input_field"
                             android:fontFamily="monospace"
                             android:paddingHorizontal="8dp"
                             android:paddingVertical="3dp"
@@ -281,7 +301,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_obsidian_subtle"
+                            android:background="@drawable/bg_input_field"
                             android:fontFamily="monospace"
                             android:paddingHorizontal="8dp"
                             android:paddingVertical="3dp"
@@ -293,9 +313,9 @@
                     <EditText
                         android:id="@+id/etServerUrl"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="38dp"
                         android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_obsidian_subtle"
+                        android:background="@drawable/bg_input_field"
                         android:fontFamily="monospace"
                         android:inputType="textUri"
                         android:paddingHorizontal="10dp"
@@ -305,42 +325,54 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ── Card 2: DFSM HUD & Fused Location Readout ─────────────── -->
+            <!-- ── Card 2: 4-State DFSM HUD & Kinetic Deadband Readout ─────── -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="14dp"
-                app:cardBackgroundColor="@color/obsidian_surface"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/charcoal_card"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_obsidian_card"
+                    android:background="@drawable/bg_neomorphic_card"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="18dp">
 
                     <!-- DFSM Operational State Indicator Banner -->
                     <TextView
                         android:id="@+id/tvOperationalState"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_obsidian_subtle"
+                        android:background="@drawable/bg_input_field"
                         android:fontFamily="sans-serif-black"
                         android:letterSpacing="0.08"
                         android:paddingHorizontal="14dp"
-                        android:paddingVertical="5dp"
+                        android:paddingVertical="6dp"
                         android:text="AWAITING VEHICLE ASSIGNMENT"
-                        android:textColor="@color/slate_400"
+                        android:textColor="@color/status_standby"
                         android:textSize="11sp" />
+
+                    <!-- 15-Minute Boarding Mode Dynamic Hint & Timer -->
+                    <TextView
+                        android:id="@+id/tvBoardingTimerHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="monospace"
+                        android:text="Boarding active: Idle timeouts suppressed for 15+ mins"
+                        android:textColor="@color/status_boarding"
+                        android:textSize="10sp"
+                        android:visibility="gone" />
 
                     <!-- Concentric Radar Pulse Ring Frame -->
                     <FrameLayout
-                        android:layout_width="110dp"
-                        android:layout_height="110dp"
-                        android:layout_marginTop="12dp">
+                        android:layout_width="106dp"
+                        android:layout_height="106dp"
+                        android:layout_marginTop="10dp">
 
                         <com.tracer.fleettracker.ui.RadarPulseView
                             android:id="@+id/radarPulseView"
@@ -355,11 +387,11 @@
                             android:textSize="22sp" />
                     </FrameLayout>
 
-                    <!-- Current Ground Speed Readout -->
+                    <!-- Current Ground Speed Readout (with Kinetic Deadband Filter) -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="4dp"
                         android:gravity="bottom"
                         android:orientation="horizontal">
 
@@ -370,7 +402,7 @@
                             android:fontFamily="sans-serif-black"
                             android:text="0.0"
                             android:textColor="@color/amber_electric"
-                            android:textSize="58sp" />
+                            android:textSize="56sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -383,34 +415,75 @@
                             android:textSize="16sp" />
                     </LinearLayout>
 
-                    <!-- Campus Layover / Transit Toggle Action -->
-                    <LinearLayout
-                        android:id="@+id/btnToggleLayover"
+                    <TextView
+                        android:id="@+id/tvSpeedFilterLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_obsidian_subtle"
+                        android:fontFamily="monospace"
+                        android:text="Kinetic Deadband Filter Active (Speed &lt; 3.6 km/h = 0.0)"
+                        android:textColor="@color/slate_500"
+                        android:textSize="9sp" />
+
+                    <!-- DFSM Operational State Transition Buttons -->
+                    <LinearLayout
+                        android:id="@+id/layoutDfsmActions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
                         android:gravity="center"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="6dp"
+                        android:orientation="horizontal"
                         android:visibility="gone">
 
+                        <!-- 15-Minute Boarding Mode Button -->
                         <TextView
-                            android:id="@+id/tvLayoverActionLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="monospace"
-                            android:text="⏸️ Enter Campus Layover (Privacy Mode)"
+                            android:id="@+id/btnStartBoarding"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_input_field"
+                            android:gravity="center"
+                            android:paddingHorizontal="6dp"
+                            android:text="🚍 Start Boarding"
+                            android:textColor="@color/status_boarding"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <!-- Campus Layover Privacy Button -->
+                        <TextView
+                            android:id="@+id/btnToggleLayover"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_input_field"
+                            android:gravity="center"
+                            android:paddingHorizontal="6dp"
+                            android:text="⏸️ Layover Mode"
                             android:textColor="@color/cyan_neon"
-                            android:textSize="11sp"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+
+                        <!-- Resume Outbound Transit Button -->
+                        <TextView
+                            android:id="@+id/btnResumeTransit"
+                            android:layout_width="0dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_input_field"
+                            android:gravity="center"
+                            android:paddingHorizontal="6dp"
+                            android:text="▶️ Transit"
+                            android:textColor="@color/emerald_online"
+                            android:textSize="10sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@color/obsidian_border" />
+                        android:layout_marginVertical="10dp"
+                        android:background="@color/charcoal_border" />
 
                     <!-- Coordinates and Fused Accuracy -->
                     <LinearLayout
@@ -429,7 +502,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="FUSED GNSS / CELLULAR"
                                 android:textColor="@color/slate_500"
-                                android:textSize="10sp"
+                                android:textSize="9sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -455,7 +528,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="ACCURACY"
                                 android:textColor="@color/slate_500"
-                                android:textSize="10sp"
+                                android:textSize="9sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -477,15 +550,15 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/obsidian_surface"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/charcoal_card"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_obsidian_card"
+                    android:background="@drawable/bg_neomorphic_card"
                     android:orientation="vertical"
                     android:padding="16dp">
 
@@ -579,10 +652,10 @@
                 android:id="@+id/btnBatteryOpt"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/bg_obsidian_subtle"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/bg_input_field"
                 android:gravity="center"
-                android:paddingVertical="10dp"
+                android:paddingVertical="9dp"
                 android:text="🔋 Check Doze &amp; Battery Exemption"
                 android:textColor="@color/slate_400"
                 android:textSize="11sp" />
@@ -595,6 +668,6 @@
         android:id="@+id/swipeSliderShift"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="6dp" />
 
 </LinearLayout>

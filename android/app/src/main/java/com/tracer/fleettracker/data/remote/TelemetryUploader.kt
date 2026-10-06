@@ -20,9 +20,49 @@ class TelemetryUploader(private val context: Context) {
     companion object {
         private const val TAG = "TelemetryUploader"
         const val DEFAULT_SERVER_URL = "https://fleet-command-api.onrender.com/api/telemetry"
+        const val DEFAULT_ASSETS_URL = "https://fleet-command-api.onrender.com/api/assets"
         const val LOCAL_SERVER_URL = "http://172.19.205.20:3000/api/telemetry"
+        const val LOCAL_ASSETS_URL = "http://172.19.205.20:3000/api/assets"
         private const val CONNECT_TIMEOUT_MS = 6000
         private const val READ_TIMEOUT_MS = 8000
+        val FALLBACK_BUS_LIST = listOf("GITAM-BUS-01", "GITAM-BUS-02", "GITAM-BUS-03", "GITAM-BUS-04", "GITAM-BUS-05")
+    }
+
+    /**
+     * Fetches the dynamic list of registered fleet assets from the cloud backend.
+     */
+    suspend fun fetchActiveBuses(assetsUrl: String = DEFAULT_ASSETS_URL): List<String> = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
+        try {
+            val url = URL(assetsUrl)
+            connection = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = CONNECT_TIMEOUT_MS
+                readTimeout = READ_TIMEOUT_MS
+                setRequestProperty("Accept", "application/json")
+            }
+
+            if (connection.responseCode in 200..299) {
+                val jsonString = connection.inputStream.bufferedReader().use { it.readText() }
+                val jsonRoot = org.json.JSONObject(jsonString)
+                val assetsArray = jsonRoot.optJSONArray("assets") ?: org.json.JSONArray()
+                val list = mutableListOf<String>()
+                for (i in 0 until assetsArray.length()) {
+                    val obj = assetsArray.getJSONObject(i)
+                    val tag = obj.optString("asset_tag")
+                    if (tag.isNotBlank()) list.add(tag)
+                }
+                if (list.isNotEmpty()) {
+                    Log.i(TAG, "Successfully fetched ${list.size} active vehicles from cloud.")
+                    return@withContext list
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Cloud asset sync deferred (${e.localizedMessage}); using cached fallback list.")
+        } finally {
+            connection?.disconnect()
+        }
+        return@withContext FALLBACK_BUS_LIST
     }
 
     /**

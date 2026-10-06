@@ -47,16 +47,20 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * High-reliability Persistent Location Tracking Foreground Service.
- * Refactored to Google Play Services FusedLocationProviderClient with PRIORITY_HIGH_ACCURACY (5000ms).
- * Provides seamless GNSS -> Wi-Fi/Cellular failover in tunnels and underpasses.
+ * Fleet Tracker v3.0 Core Foreground Location Service.
+ * - FusedLocationProviderClient with PRIORITY_HIGH_ACCURACY (5000ms polling).
+ * - Kinetic Deadband Filter (forces speeds < 1.0 m/s to exactly 0.0 km/h).
+ * - Strict 4-State DFSM (STANDBY, BOARDING_OPERATIONS, OUTBOUND_TRANSIT, CAMPUS_LAYOVER).
+ * - 15-Minute Boarding Fix: Idle timeouts explicitly suppressed during boarding.
+ * - Store-and-Forward SQLite Room Database & Anti-Spoofing Hardware Validation.
  */
 class LocationService : Service() {
 
     enum class OperationalState(val label: String, val badgeColor: Int) {
-        STANDBY("AWAITING VEHICLE ASSIGNMENT", R.color.slate_400),
-        INBOUND_TRANSIT("ACTIVE: INBOUND ROUTE", R.color.amber_electric),
-        CAMPUS_LAYOVER("LAYOVER: TRACKING SUSPENDED", R.color.cyan_neon)
+        STANDBY("AWAITING VEHICLE ASSIGNMENT", R.color.status_standby),
+        BOARDING_OPERATIONS("STUDENT BOARDING: TIMEOUT SUPPRESSED", R.color.status_boarding),
+        OUTBOUND_TRANSIT("ACTIVE: OUTBOUND TRANSIT", R.color.status_transit),
+        CAMPUS_LAYOVER("LAYOVER: TRACKING SUSPENDED", R.color.status_layover)
     }
 
     companion object {
@@ -66,10 +70,11 @@ class LocationService : Service() {
 
         const val ACTION_START = "ACTION_START_SHIFT"
         const val ACTION_STOP = "ACTION_STOP_SHIFT"
-        const val ACTION_SET_LAYOVER = "ACTION_SET_LAYOVER"
+        const val ACTION_SET_STATE = "ACTION_SET_STATE"
+
         const val EXTRA_ASSET_ID = "EXTRA_ASSET_ID"
         const val EXTRA_SERVER_URL = "EXTRA_SERVER_URL"
-        const val EXTRA_IS_LAYOVER = "EXTRA_IS_LAYOVER"
+        const val EXTRA_TARGET_STATE = "EXTRA_TARGET_STATE"
 
         // Observable Live Telemetry State for UI Binding
         data class ServiceState(
@@ -83,7 +88,8 @@ class LocationService : Service() {
             val accuracy: Float = 0.0f,
             val lastUpdated: Long = 0L,
             val spoofDetectedCount: Int = 0,
-            val unsyncedCount: Int = 0
+            val unsyncedCount: Int = 0,
+            val boardingStartTime: Long = 0L
         )
 
         private val _serviceState = MutableStateFlow(ServiceState())
@@ -130,9 +136,16 @@ class LocationService : Service() {
             ACTION_STOP -> {
                 stopTracking()
             }
-            ACTION_SET_LAYOVER -> {
-                val isLayover = intent.getBooleanExtra(EXTRA_IS_LAYOVER, false)
-                toggleLayoverMode(isLayover)
+            ACTION_SET_STATE -> {
+                val stateName = intent.getStringExtra(EXTRA_TARGET_STATE)
+                if (stateName != null) {
+                    try {
+                        val targetState = OperationalState.valueOf(stateName)
+                        setOperationalState(targetState)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Unknown state transition: $stateName")
+                    }
+                }
             }
         }
         return START_STICKY
@@ -140,15 +153,15 @@ class LocationService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun startTracking() {
-        startForeground(NOTIFICATION_ID, buildNotification("Active: Inbound Route • $activeAssetId"))
+        startForeground(NOTIFICATION_ID, buildNotification("Active: Outbound Transit • $activeAssetId"))
 
         _serviceState.value = _serviceState.value.copy(
             isTracking = true,
-            operationalState = OperationalState.INBOUND_TRANSIT,
+            operationalState = OperationalState.OUTBOUND_TRANSIT,
             assetId = activeAssetId
         )
 
-        // Google Play Services: FusedLocationProviderClient Anti-Degradation Request
+        // FusedLocationProviderClient with PRIORITY_HIGH_ACCURACY (5000ms polling)
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
             .setMinUpdateIntervalMillis(2000L)
             .setMinUpdateDistanceMeters(1.0f)
@@ -168,12 +181,12 @@ class LocationService : Service() {
                 locationCallback!!,
                 Looper.getMainLooper()
             )
-            Log.i(TAG, "FusedLocationProviderClient polling at 5000ms HIGH_ACCURACY for $activeAssetId")
+            Log.i(TAG, "FusedLocationProviderClient registered at 5000ms interval for $activeAssetId")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to register FusedLocationProviderClient: ${e.localizedMessage}")
         }
 
-        // Observe pending local SQLite Room cache count
+        // Observe pending SQLite Room backlog count
         serviceScope.launch {
             database.telemetryDao().observeUnsyncedCount().collect { count ->
                 _serviceState.value = _serviceState.value.copy(unsyncedCount = count)
@@ -181,18 +194,28 @@ class LocationService : Service() {
         }
     }
 
-    private fun toggleLayoverMode(isLayover: Boolean) {
-        val newState = if (isLayover) OperationalState.CAMPUS_LAYOVER else OperationalState.INBOUND_TRANSIT
-        _serviceState.value = _serviceState.value.copy(operationalState = newState)
-
-        val notificationMsg = if (isLayover) {
-            "Campus Layover: Tracking Suspended (Privacy Mode)"
+    fun setOperationalState(newState: OperationalState) {
+        val boardingStart = if (newState == OperationalState.BOARDING_OPERATIONS) {
+            System.currentTimeMillis()
         } else {
-            "Active: Inbound Route • $activeAssetId"
+            0L
         }
+
+        _serviceState.value = _serviceState.value.copy(
+            operationalState = newState,
+            boardingStartTime = boardingStart
+        )
+
+        val notificationMsg = when (newState) {
+            OperationalState.STANDBY -> "Transponder Standby • $activeAssetId"
+            OperationalState.BOARDING_OPERATIONS -> "Student Boarding (Timeout Suppressed) • $activeAssetId"
+            OperationalState.OUTBOUND_TRANSIT -> "Active: Outbound Transit • $activeAssetId"
+            OperationalState.CAMPUS_LAYOVER -> "Layover: Tracking Suspended (Privacy Mode)"
+        }
+
         val manager = getSystemService(NotificationManager::class.java)
         manager?.notify(NOTIFICATION_ID, buildNotification(notificationMsg))
-        Log.i(TAG, "DFSM Operational state transitioned to: ${newState.name}")
+        Log.i(TAG, "DFSM State Transitioned to: ${newState.name}")
     }
 
     private fun stopTracking() {
@@ -226,7 +249,7 @@ class LocationService : Service() {
     }
 
     private fun handleNewLocation(location: Location) {
-        // Strict Anti-Spoofing Security Verification
+        // Strict Anti-Spoofing Hardware Security Validation
         if (isLocationSpoofed(location)) {
             spoofRejections++
             Log.w(TAG, "SECURITY ALERT: Rejected fake GPS coordinate from mock provider! Total blocked: $spoofRejections")
@@ -234,7 +257,25 @@ class LocationService : Service() {
             return
         }
 
-        val speedKmh = if (location.hasSpeed()) (location.speed * 3.6) else 0.0
+        // ── Kinetic Deadband Filter (GPS Drift "Phantom Speed" Fix) ────────
+        // If speed < 1.0 m/s (~3.6 km/h), forcefully override to exactly 0.0 km/h
+        val rawSpeedMps = if (location.hasSpeed()) location.speed else 0.0f
+        val calculatedSpeedKmh = rawSpeedMps * 3.6
+        val filteredSpeedKmh = if (rawSpeedMps < 1.0f || calculatedSpeedKmh < 3.6) {
+            0.0
+        } else {
+            calculatedSpeedKmh
+        }
+
+        // ── DFSM Automatic Transition: BOARDING -> OUTBOUND_TRANSIT ────────
+        // If bus is in BOARDING_OPERATIONS and speed exceeds 15.0 km/h, auto-transition to OUTBOUND_TRANSIT
+        if (_serviceState.value.operationalState == OperationalState.BOARDING_OPERATIONS) {
+            if (filteredSpeedKmh >= 15.0) {
+                Log.i(TAG, "Kinetic speed threshold exceeded (${filteredSpeedKmh} km/h >= 15.0)! Auto-transitioning to OUTBOUND_TRANSIT")
+                setOperationalState(OperationalState.OUTBOUND_TRANSIT)
+            }
+        }
+
         val headingDeg = if (location.hasBearing()) location.bearing.toDouble() else 0.0
         val altitudeMeters = if (location.hasAltitude()) location.altitude else null
         val batteryPct = getBatteryPercentage()
@@ -244,7 +285,7 @@ class LocationService : Service() {
         _serviceState.value = _serviceState.value.copy(
             latitude = location.latitude,
             longitude = location.longitude,
-            speedKmh = speedKmh,
+            speedKmh = filteredSpeedKmh,
             heading = headingDeg,
             accuracy = location.accuracy,
             lastUpdated = System.currentTimeMillis()
@@ -252,21 +293,25 @@ class LocationService : Service() {
 
         // Privacy Lock: In CAMPUS_LAYOVER state, GPS streaming and logging are suspended!
         if (_serviceState.value.operationalState == OperationalState.CAMPUS_LAYOVER) {
-            updateNotification(0.0, location.latitude, location.longitude, isLayover = true)
-            Log.d(TAG, "Campus layover active; telemetry ingestion deferred for privacy.")
+            updateNotification(0.0, location.latitude, location.longitude, "⏸️ Layover Mode: Tracking Suspended (Privacy Mode)")
             return
         }
 
-        updateNotification(speedKmh, location.latitude, location.longitude, isLayover = false)
+        val stateLabel = when (_serviceState.value.operationalState) {
+            OperationalState.BOARDING_OPERATIONS -> "Boarding (Idle Timeout Suppressed)"
+            OperationalState.OUTBOUND_TRANSIT -> "Speed: ${String.format(Locale.US, "%.1f", filteredSpeedKmh)} km/h"
+            else -> "Tracking"
+        }
+        updateNotification(filteredSpeedKmh, location.latitude, location.longitude, stateLabel)
 
-        // Store-and-Forward: Save to Room SQLite, then trigger immediate upload attempt
+        // Store-and-Forward: Save to Room SQLite, then trigger upload attempt
         serviceScope.launch {
             val entity = TelemetryEntity(
                 assetId = activeAssetId,
                 latitude = location.latitude,
                 longitude = location.longitude,
                 altitude = altitudeMeters,
-                speed = speedKmh,
+                speed = filteredSpeedKmh,
                 heading = headingDeg,
                 batteryLevel = batteryPct,
                 recordedAt = timestampIso,
@@ -284,7 +329,7 @@ class LocationService : Service() {
                 database.telemetryDao().markAsSynced(listOf(insertedId))
                 database.telemetryDao().purgeSyncedRecords()
             } else {
-                Log.d(TAG, "Network unavailable; coordinate queued in Room (ID: $insertedId)")
+                Log.d(TAG, "Network offline; coordinate queued in Room (ID: $insertedId)")
             }
         }
     }
@@ -371,15 +416,11 @@ class LocationService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setContentIntent(pendingIntent)
             .build()
-        }
+    }
 
-    private fun updateNotification(speedKmh: Double, lat: Double, lng: Double, isLayover: Boolean) {
-        val text = if (isLayover) {
-            "⏸️ Layover Mode: Tracking Suspended (Privacy Mode)"
-        } else {
-            val formattedSpeed = String.format(Locale.US, "%.1f km/h", speedKmh)
-            "Speed: $formattedSpeed | Lat: ${String.format(Locale.US, "%.5f", lat)}, Lon: ${String.format(Locale.US, "%.5f", lng)}"
-        }
+    private fun updateNotification(speedKmh: Double, lat: Double, lng: Double, statusPrefix: String) {
+        val formattedSpeed = String.format(Locale.US, "%.1f km/h", speedKmh)
+        val text = "$statusPrefix | Lat: ${String.format(Locale.US, "%.5f", lat)}, Lon: ${String.format(Locale.US, "%.5f", lng)}"
         val manager = getSystemService(NotificationManager::class.java)
         manager?.notify(NOTIFICATION_ID, buildNotification(text))
     }
