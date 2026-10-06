@@ -33,7 +33,7 @@ export default function Header({ wsStatus, vehicleCount, isSimulating, onOpenFle
               FLEET COMMAND
             </h1>
             <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 bg-amber-400/10 border border-amber-400/25 px-1.5 py-0.2 rounded">
-              v2.5
+              v3.0
             </span>
           </div>
           <p className="text-[10px] text-slate-400 tracking-wider font-medium flex items-center gap-1.5">
@@ -75,13 +75,13 @@ export default function Header({ wsStatus, vehicleCount, isSimulating, onOpenFle
 
         {/* Download Driver App APK */}
         <a
-          href="/FleetTracker-v2.5.apk"
-          download="FleetTracker-v2.5.apk"
+          href="/FleetTracker-v3.0.apk"
+          download="FleetTracker-v3.0.apk"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/10 border border-amber-400/40 text-amber-400 hover:bg-amber-400/20 hover:border-amber-400/70 transition-all font-semibold text-xs shadow-amber-glow/20 active:scale-95"
-          title="Download Android Driver Tracker APK (v2.5)"
+          title="Download Android Driver Tracker APK (v3.0 Neo-Morphic Enterprise Edition)"
         >
           <span>📱</span>
-          <span>Download App</span>
+          <span>Download App (v3.0)</span>
         </a>
 
         {/* Manage Fleet Primary Action Button */}
