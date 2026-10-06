@@ -11,11 +11,11 @@ export default function Header({ wsStatus, vehicleCount, isSimulating, onOpenFle
   }, []);
 
   const statusConfig = {
-    connected:  { dot: 'bg-emerald-400', ring: 'shadow-emerald-glow', text: 'TRANSIT MESH LIVE', pill: 'text-emerald-400 bg-emerald-950/70 border-emerald-800/60' },
-    simulating: { dot: 'bg-amber-400',   ring: 'shadow-amber-glow animate-pulse', text: 'KRC SIMULATION RUNNING', pill: 'text-amber-400 bg-amber-950/70 border-amber-800/60' },
-    connecting: { dot: 'bg-sky-400',     ring: '', text: 'ACQUIRING TELEMETRY…', pill: 'text-sky-400 bg-sky-950/70 border-sky-800/60' },
+    connected:  { dot: 'bg-emerald-400', ring: 'shadow-emerald-glow', text: 'DISPATCH ONLINE', pill: 'text-emerald-400 bg-emerald-950/70 border-emerald-800/60' },
+    simulating: { dot: 'bg-amber-400',   ring: 'shadow-amber-glow', text: 'DEMO SIMULATION', pill: 'text-amber-400 bg-amber-950/70 border-amber-800/60' },
+    connecting: { dot: 'bg-sky-400',     ring: '', text: 'CONNECTING...', pill: 'text-sky-400 bg-sky-950/70 border-sky-800/60' },
     disconnected: { dot: 'bg-slate-500', ring: '', text: 'STANDBY', pill: 'text-slate-400 bg-slate-800 border-slate-700' },
-    error:      { dot: 'bg-rose-500',    ring: '', text: 'TELEMETRY FAULT', pill: 'text-rose-400 bg-rose-950/70 border-rose-800/60' },
+    error:      { dot: 'bg-rose-500',    ring: '', text: 'CONNECTION FAULT', pill: 'text-rose-400 bg-rose-950/70 border-rose-800/60' },
   };
 
   const currentStatus = statusConfig[wsStatus] ?? statusConfig.disconnected;
@@ -25,7 +25,7 @@ export default function Header({ wsStatus, vehicleCount, isSimulating, onOpenFle
       {/* ── Brand & Campus Entity ───────────────────────────────────── */}
       <div className="flex items-center gap-3.5">
         <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-base shadow-amber-glow">
-          ⚡
+          🚌
         </div>
         <div>
           <div className="flex items-center gap-2">

@@ -197,13 +197,14 @@ export function useTelemetryWebSocket() {
         ? [...existing.speedHistory.slice(-(SPEED_HISTORY_SIZE - 1)), speed]
         : [speed, speed];
 
-      const driver = DRIVER_REGISTRY[point.asset_id] || {
-        name: 'Authorized Operator',
-        role: 'Transit Crew',
-        route: 'Campus Internal',
-        phone: '+91 98480 00000',
-        shiftStart: '08:00 AM',
-        rating: 4.8,
+      const driverName = point.driver_name || point.driverName || DRIVER_REGISTRY[point.asset_id]?.name || `Driver (${point.asset_id})`;
+      const driver = {
+        name: driverName,
+        role: DRIVER_REGISTRY[point.asset_id]?.role || 'Fleet Operator',
+        route: point.route || DRIVER_REGISTRY[point.asset_id]?.route || 'Campus Route',
+        phone: DRIVER_REGISTRY[point.asset_id]?.phone || '+91 98480 00000',
+        shiftStart: DRIVER_REGISTRY[point.asset_id]?.shiftStart || '08:00 AM',
+        rating: DRIVER_REGISTRY[point.asset_id]?.rating || 4.9,
       };
 
       const isStale = false;
@@ -329,9 +330,22 @@ export function useTelemetryWebSocket() {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.event === 'TELEMETRY_UPDATE' && Array.isArray(msg.data)) {
-          msg.data.forEach(p => p.asset_id && upsertRef.current(p, setVehicles));
+        let items = [];
+        if (msg.event === 'TELEMETRY_UPDATE' || msg.type === 'TELEMETRY_UPDATE') {
+          items = Array.isArray(msg.data) ? msg.data : [msg.data];
+        } else if (Array.isArray(msg)) {
+          items = msg;
+        } else if (msg && typeof msg === 'object' && msg.asset_id) {
+          items = [msg];
+        } else if (Array.isArray(msg?.data)) {
+          items = msg.data;
         }
+
+        items.forEach(p => {
+          if (p && p.asset_id) {
+            upsertRef.current(p, setVehicles);
+          }
+        });
       } catch { /* ignore parse error */ }
     };
 

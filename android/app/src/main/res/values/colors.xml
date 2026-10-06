@@ -49,6 +49,24 @@
     <color name="crimson_stop">#EF4444</color>
     <color name="crimson_dark">#B91C1C</color>
 
+    <!-- ── Commercial Uber-Driver Clean Palette ────────────────────── -->
+    <color name="commercial_bg">#F3F4F6</color>
+    <color name="commercial_surface">#FFFFFF</color>
+    <color name="commercial_card">#FFFFFF</color>
+    <color name="commercial_border">#E5E7EB</color>
+    <color name="commercial_charcoal">#111827</color>
+    <color name="commercial_charcoal_muted">#4B5563</color>
+    <color name="commercial_charcoal_light">#9CA3AF</color>
+    <color name="commercial_emerald">#10B981</color>
+    <color name="commercial_emerald_dark">#059669</color>
+    <color name="commercial_emerald_light">#D1FAE5</color>
+    <color name="commercial_red">#EF4444</color>
+    <color name="commercial_red_light">#FEE2E2</color>
+    <color name="commercial_amber">#F59E0B</color>
+    <color name="commercial_amber_light">#FEF3C7</color>
+    <color name="commercial_blue">#2563EB</color>
+    <color name="commercial_blue_light">#EFF6FF</color>
+
     <!-- ── High-Contrast Typography & Surfaces ────────────────────────── -->
     <color name="white">#FFFFFF</color>
     <color name="slate_100">#F1F5F9</color>

@@ -11,38 +11,74 @@ const DEFAULT_ZOOM = 17;
 const liveMarkerRegistry = new Map(); // assetId → L.Marker
 
 /**
- * Creates custom HTML marker with concentric pulsing radar waves radiating outward (Electric Amber #FFB800)
+ * Creates clean commercial transit marker with directional pointer and real-world metrics
+ * (Asset ID, Driver Name, Current Speed)
  */
 function createRadarDivIcon(vehicle) {
-  const { assetId, heading = 0, speed = 0, isStale = false } = vehicle;
-  const staleClass = isStale ? ' radar-marker-stale' : '';
+  const { assetId, driver, heading = 0, speed = 0, isStale = false } = vehicle;
+  const driverName = driver?.name || 'Driver';
+  const speedDisplay = speed <= 0 ? '0 km/h (Stopped)' : `${Math.round(speed)} km/h`;
+  const statusColor = isStale ? '#EF4444' : '#10B981';
 
   const html = `
-    <div class="radar-marker-container${staleClass}">
-      ${!isStale ? '<div class="radar-ring"></div><div class="radar-ring-delayed"></div>' : ''}
-      
-      <!-- Directional Heading Pointer & Bus Pin -->
-      <div class="radar-core" style="transform: rotate(${heading}deg);">
-        <div class="radar-heading"></div>
-        <div class="radar-glyph" style="transform: rotate(-${heading}deg);">
-          🚌
-        </div>
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: auto; transform: translate(-50%, -50%);">
+      <!-- Commercial Vehicle Pin with Direction Heading -->
+      <div style="
+        width: 36px;
+        height: 36px;
+        background: #1E293B;
+        border: 2px solid ${statusColor};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        position: relative;
+      ">
+        <!-- Directional Pointer -->
+        <div style="
+          position: absolute;
+          top: -6px;
+          left: 50%;
+          transform: translateX(-50%) rotate(${heading}deg);
+          transform-origin: 50% 24px;
+          width: 0;
+          height: 0;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-bottom: 7px solid ${statusColor};
+        "></div>
+        <span style="font-size: 16px;">🚌</span>
       </div>
 
-      <!-- Floating HUD Label Tag -->
-      <div class="radar-tag${isStale ? ' radar-tag-stale' : ''}">
-        <span>${assetId}</span>
-        <span style="opacity: 0.5;">•</span>
-        <span style="color: #F1F5F9; font-weight: 500;">${isStale ? 'OFFLINE' : `${speed.toFixed(0)}kph`}</span>
+      <!-- Human-Designed Commercial Transit Metric Badge -->
+      <div style="
+        margin-top: 4px;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 6px;
+        padding: 2px 7px;
+        white-space: nowrap;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      ">
+        <span style="color: #F8FAFC; font-weight: 700; font-size: 11px;">${assetId}</span>
+        <span style="color: #64748B; font-size: 10px;">•</span>
+        <span style="color: #94A3B8; font-size: 10px; font-weight: 500;">${driverName}</span>
+        <span style="color: #64748B; font-size: 10px;">•</span>
+        <span style="color: ${speed > 0 ? '#34D399' : '#CBD5E1'}; font-weight: 600; font-size: 10px;">${isStale ? 'OFFLINE' : speedDisplay}</span>
       </div>
     </div>
   `;
 
   return L.divIcon({
     className: '',
-    iconSize: [60, 60],
-    iconAnchor: [30, 30],
-    popupAnchor: [0, -32],
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+    popupAnchor: [0, -20],
     html,
   });
 }
@@ -89,7 +125,7 @@ function createKrcCenterIcon() {
         backdrop-filter: blur(14px);
         box-shadow: 0 4px 14px rgba(0,0,0,0.7);
       ">
-        KRC HUB • 100M CORE ZONE
+        KRC BUS TERMINAL • CAMPUS HUB (100M)
       </div>
     </div>
   `;

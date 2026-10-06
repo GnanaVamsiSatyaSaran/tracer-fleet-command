@@ -4,24 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/charcoal_bg"
+    android:background="@color/commercial_bg"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="24dp">
 
     <!-- ── Brand Hero Header ────────────────────────────────────────────── -->
     <FrameLayout
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_gradient_indigo_purple">
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_commercial_avatar">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="⚡"
-            android:textColor="@color/white"
+            android:text="🚌"
             android:textSize="32sp" />
     </FrameLayout>
 
@@ -29,41 +28,41 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-black"
-        android:letterSpacing="0.06"
-        android:text="FLEET COMMAND"
-        android:textColor="@color/white"
+        android:letterSpacing="0.04"
+        android:text="GITAM DRIVER PORTAL"
+        android:textColor="@color/commercial_charcoal"
         android:textSize="22sp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="3dp"
         android:fontFamily="sans-serif-medium"
-        android:text="Driver Authentication Portal • v3.0"
-        android:textColor="@color/indigo_accent"
-        android:textSize="12sp" />
+        android:text="Campus Fleet Transit System • v3.0"
+        android:textColor="@color/commercial_emerald_dark"
+        android:textSize="12sp"
+        android:textStyle="bold" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:text="GITAM University Campus Transit Emitter"
-        android:textColor="@color/slate_500"
+        android:text="Secure Driver &amp; Vehicle Dispatch Gateway"
+        android:textColor="@color/commercial_charcoal_muted"
         android:textSize="11sp" />
 
-    <!-- ── Neo-Morphic Login Card ───────────────────────────────────────── -->
+    <!-- ── Crisp White Commercial Login Card ────────────────────────────── -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        app:cardBackgroundColor="@color/charcoal_card"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp">
+        android:layout_marginTop="24dp"
+        app:cardBackgroundColor="@color/commercial_card"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="6dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_neomorphic_card"
             android:orientation="vertical"
             android:padding="22dp">
 
@@ -71,44 +70,43 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-black"
-                android:text="CAPTAIN SIGN IN"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
+                android:text="DRIVER SIGN IN"
+                android:textColor="@color/commercial_charcoal"
+                android:textSize="15sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Enter designated transit badge credentials"
-                android:textColor="@color/slate_400"
-                android:textSize="11sp" />
+                android:text="Enter driver employee ID and security PIN"
+                android:textColor="@color/commercial_charcoal_muted"
+                android:textSize="12sp" />
 
             <!-- Employee ID Input -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="sans-serif-bold"
                 android:text="EMPLOYEE BADGE ID"
-                android:textColor="@color/amber_electric"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:textColor="@color/commercial_charcoal"
+                android:textSize="10sp" />
 
             <EditText
                 android:id="@+id/etEmployeeId"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_field"
+                android:background="@drawable/bg_commercial_input"
                 android:drawableStart="@android:drawable/ic_menu_myplaces"
                 android:drawablePadding="10dp"
-                android:drawableTint="@color/slate_400"
+                android:drawableTint="@color/commercial_charcoal_light"
                 android:fontFamily="monospace"
                 android:hint="e.g. DRV-8821"
                 android:inputType="textCapCharacters"
                 android:paddingHorizontal="12dp"
-                android:textColor="@color/white"
-                android:textColorHint="@color/slate_600"
+                android:textColor="@color/commercial_charcoal"
+                android:textColorHint="@color/commercial_charcoal_light"
                 android:textSize="13sp" />
 
             <!-- PIN Input -->
@@ -116,28 +114,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="sans-serif-bold"
                 android:text="SECURITY PIN"
-                android:textColor="@color/amber_electric"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:textColor="@color/commercial_charcoal"
+                android:textSize="10sp" />
 
             <EditText
                 android:id="@+id/etPin"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:layout_marginTop="6dp"
-                android:background="@drawable/bg_input_field"
+                android:background="@drawable/bg_commercial_input"
                 android:drawableStart="@android:drawable/ic_lock_idle_lock"
                 android:drawablePadding="10dp"
-                android:drawableTint="@color/slate_400"
+                android:drawableTint="@color/commercial_charcoal_light"
                 android:fontFamily="monospace"
                 android:hint="4-Digit PIN"
                 android:inputType="numberPassword"
                 android:maxLength="6"
                 android:paddingHorizontal="12dp"
-                android:textColor="@color/white"
-                android:textColorHint="@color/slate_600"
+                android:textColor="@color/commercial_charcoal"
+                android:textColorHint="@color/commercial_charcoal_light"
                 android:textSize="14sp" />
 
             <!-- Status / Loading Label -->
@@ -148,8 +145,9 @@
                 android:layout_marginTop="10dp"
                 android:gravity="center"
                 android:text=""
-                android:textColor="@color/cyan_neon"
-                android:textSize="11sp"
+                android:textColor="@color/commercial_emerald_dark"
+                android:textSize="12sp"
+                android:textStyle="bold"
                 android:visibility="gone" />
 
             <ProgressBar
@@ -158,21 +156,21 @@
                 android:layout_height="28dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="8dp"
-                android:indeterminateTint="@color/purple_primary"
+                android:indeterminateTint="@color/commercial_emerald"
                 android:visibility="gone" />
 
-            <!-- Primary Login Button -->
+            <!-- Primary Login Button (Large Commercial Emerald) -->
             <Button
                 android:id="@+id/btnSignIn"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_gradient_indigo_purple"
+                android:layout_height="52dp"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/bg_commercial_btn_go"
                 android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.05"
-                android:text="AUTHENTICATE &amp; SYNC ASSETS"
+                android:letterSpacing="0.04"
+                android:text="SIGN IN &amp; SYNC FLEET"
                 android:textColor="@color/white"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 app:backgroundTint="@null" />
 
             <!-- Quick 1-Tap Demo Credentials Pill -->
@@ -182,13 +180,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="14dp"
-                android:background="@drawable/bg_input_field"
-                android:fontFamily="monospace"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
-                android:text="⚡ 1-Tap Demo: Captain Ramesh (DRV-8821)"
-                android:textColor="@color/indigo_accent"
-                android:textSize="10sp" />
+                android:background="@drawable/bg_commercial_input"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="7dp"
+                android:text="👤 Quick Fill: Captain Ramesh (DRV-8821)"
+                android:textColor="@color/commercial_charcoal"
+                android:textSize="11sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -199,9 +197,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:fontFamily="monospace"
-        android:text="☁️ Cloud Ingestion: fleet-command-api.onrender.com"
-        android:textColor="@color/slate_600"
-        android:textSize="10sp" />
+        android:fontFamily="sans-serif-medium"
+        android:text="☁️ Connected to: fleet-command-api.onrender.com"
+        android:textColor="@color/commercial_charcoal_light"
+        android:textSize="11sp" />
 
 </LinearLayout>

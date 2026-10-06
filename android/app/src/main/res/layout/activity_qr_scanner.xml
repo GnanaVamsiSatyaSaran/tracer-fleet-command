@@ -43,16 +43,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-black"
-                android:text="PAIR VEHICLE TRANSPONDER"
+                android:text="SCAN BUS QR CODE"
                 android:textColor="@color/white"
-                android:textSize="14sp" />
+                android:textSize="15sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Align QR Code inside HUD targeting frame"
+                android:text="Align QR code within the target box"
                 android:textColor="@color/slate_400"
-                android:textSize="11sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <ImageButton
@@ -61,16 +61,16 @@
             android:layout_height="40dp"
             android:background="@drawable/bg_obsidian_subtle"
             android:src="@android:drawable/ic_menu_camera"
-            app:tint="@color/amber_electric"
+            app:tint="@color/commercial_emerald"
             android:contentDescription="Flashlight" />
     </LinearLayout>
 
-    <!-- Centered Targeting Box (260dp x 260dp) -->
+    <!-- Centered Targeting Box (260dp x 260dp) with Clean Rounded Frame -->
     <FrameLayout
         android:id="@+id/scanFrame"
         android:layout_width="260dp"
         android:layout_height="260dp"
-        android:background="@drawable/bg_obsidian_card"
+        android:background="@drawable/bg_scanner_reticle"
         app:layout_constraintBottom_toTopOf="@+id/bottomControlPanel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -80,17 +80,17 @@
         <View
             android:id="@+id/laserScannerLine"
             android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/cyan_neon" />
+            android:layout_height="2.5dp"
+            android:background="@color/commercial_emerald" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:alpha="0.25"
+            android:alpha="0.3"
             android:text="[ QR ]"
             android:textColor="@color/white"
-            android:textSize="28sp"
+            android:textSize="26sp"
             android:textStyle="bold" />
     </FrameLayout>
 
@@ -101,12 +101,12 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:background="@drawable/bg_obsidian_subtle"
-        android:fontFamily="monospace"
+        android:fontFamily="sans-serif-medium"
         android:paddingHorizontal="14dp"
         android:paddingVertical="6dp"
-        android:text="Google ML Kit Vision • QR Engine"
-        android:textColor="@color/amber_electric"
-        android:textSize="11sp"
+        android:text="Scanning for Vehicle Asset Tag…"
+        android:textColor="@color/commercial_emerald"
+        android:textSize="12sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

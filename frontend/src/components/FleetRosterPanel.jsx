@@ -99,8 +99,8 @@ export default function FleetRosterPanel({
     }
     const message =
       actionName === 'ping'
-        ? `📡 Pinged transponder on ${bus.assetId} (${bus.driver.name}) — 28ms ACK`
-        : `💬 Priority message dispatched to driver ${bus.driver.name} via console`;
+        ? `📡 Status check confirmed for ${bus.assetId} (Driver: ${bus.driver.name})`
+        : `💬 Priority dispatch message sent to driver ${bus.driver.name}`;
 
     setDispatchToast(message);
     setTimeout(() => setDispatchToast(null), 4000);
@@ -135,8 +135,8 @@ export default function FleetRosterPanel({
             <h2 className="text-sm font-bold tracking-wider text-slate-100 uppercase flex items-center gap-2">
               <span>Active Fleet Roster</span>
               {isSimulating && (
-                <span className="text-[10px] font-mono tracking-widest font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full animate-pulse">
-                  SIM MODE
+                <span className="text-[10px] font-mono tracking-wider font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                  DEMO SIMULATION
                 </span>
               )}
             </h2>
@@ -258,7 +258,7 @@ export default function FleetRosterPanel({
                             className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-200 hover:bg-amber-500/20 hover:text-amber-300 flex items-center gap-2 transition-colors"
                           >
                             <span>📡</span>
-                            <span>Ping Device</span>
+                            <span>Check Status</span>
                           </button>
                           <button
                             onClick={() => triggerDispatchAction('message', v)}
@@ -318,13 +318,13 @@ export default function FleetRosterPanel({
                 {/* Bottom Row: Speed Sparkline + Battery */}
                 <div className="flex items-center justify-between pt-1 border-t border-slate-700/40 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-slate-400 uppercase font-medium">Speed:</span>
-                    {v.isStale ? (
-                      <span className="text-slate-500 font-mono text-xs">—</span>
-                    ) : (
+                    <span className="text-[10px] text-slate-400 uppercase font-medium">Current Speed:</span>
+                    <span className="font-mono text-xs font-bold text-slate-100">
+                      {v.isStale ? '—' : (v.speed <= 0 ? '0 km/h (Stopped)' : `${Math.round(v.speed)} km/h`)}
+                    </span>
+                    {!v.isStale && v.speed > 0 && (
                       <Sparkline data={v.speedHistory} color="#fbbf24" />
                     )}
-                    <span className="text-[10px] text-slate-500 font-mono">km/h</span>
                   </div>
 
                   <div className="flex items-center gap-1 text-[11px] text-slate-300 font-mono">
