@@ -112,12 +112,49 @@ async function deleteAsset(idOrTag) {
   } catch (_) {
     // ignore DB offline
   }
-
   return { success: true, deleted: idOrTag };
+}
+
+async function autoUpsertAsset(assetTag) {
+  if (!assetTag) return;
+  const tag = String(assetTag).trim().toUpperCase();
+  const existing = inMemoryAssets.find(a => a.asset_tag.toUpperCase() === tag);
+  if (!existing) {
+    const id = `asset-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const newAsset = {
+      id,
+      asset_tag: tag,
+      license_plate: `AP 31 TC ${Math.floor(1000 + Math.random() * 9000)}`,
+      model: 'Campus Transit Coach',
+      capacity: 40,
+      status: 'ACTIVE',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    inMemoryAssets.push(newAsset);
+
+    // Asynchronously upsert to PostgreSQL if connected
+    try {
+      await db.query(`
+        INSERT INTO fleet_assets (id, asset_tag, license_plate, model, capacity, status)
+        VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
+        ON CONFLICT (asset_tag) DO NOTHING;
+      `, [
+        newAsset.id,
+        newAsset.asset_tag,
+        newAsset.license_plate,
+        newAsset.model,
+        newAsset.capacity
+      ]);
+    } catch (_) {
+      // DB offline or non-blocking
+    }
+  }
 }
 
 module.exports = {
   getAllAssets,
   createAsset,
   deleteAsset,
+  autoUpsertAsset,
 };
