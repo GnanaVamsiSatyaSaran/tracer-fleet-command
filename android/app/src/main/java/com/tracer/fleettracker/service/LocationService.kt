@@ -182,6 +182,14 @@ class LocationService : Service() {
                 Looper.getMainLooper()
             )
             Log.i(TAG, "FusedLocationProviderClient registered at 5000ms interval for $activeAssetId")
+
+            // Emit immediate last known location if available so server updates with 0ms delay
+            fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                if (loc != null) {
+                    Log.i(TAG, "Immediate lastLocation acquired: ${loc.latitude}, ${loc.longitude}")
+                    handleNewLocation(loc)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to register FusedLocationProviderClient: ${e.localizedMessage}")
         }

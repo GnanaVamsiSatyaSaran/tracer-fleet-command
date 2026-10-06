@@ -59,6 +59,7 @@ class MainActivity : AppCompatActivity() {
             val scannedTag = result.data?.getStringExtra(QrScannerActivity.EXTRA_ASSET_TAG)
             if (!scannedTag.isNullOrBlank()) {
                 bindVehicleIdentity(scannedTag)
+                promptStartDutyAfterSelection(scannedTag)
             }
         }
     }
@@ -269,14 +270,27 @@ class MainActivity : AppCompatActivity() {
     private fun showDynamicCloudBusPicker() {
         val busArray = dynamicBusesList.toTypedArray()
         AlertDialog.Builder(this)
-            .setTitle("Active Transit Fleet Assets")
+            .setTitle("Select Vehicle Asset")
             .setItems(busArray) { _, which ->
-                bindVehicleIdentity(busArray[which])
+                val chosen = busArray[which]
+                bindVehicleIdentity(chosen)
+                promptStartDutyAfterSelection(chosen)
             }
             .setNeutralButton("🔄 Refresh Cloud") { _, _ ->
                 refreshCloudAssets()
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun promptStartDutyAfterSelection(tag: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Vehicle Assigned: $tag")
+            .setMessage("Vehicle $tag is verified. Start active duty and begin live GPS transmission now?")
+            .setPositiveButton("⚡ Start Duty Now") { _, _ ->
+                checkPermissionsAndToggleShift()
+            }
+            .setNegativeButton("Later (Stay Offline)", null)
             .show()
     }
 

@@ -21,10 +21,10 @@ class TelemetryUploader(private val context: Context) {
         private const val TAG = "TelemetryUploader"
         const val DEFAULT_SERVER_URL = "https://fleet-command-api.onrender.com/api/telemetry"
         const val DEFAULT_ASSETS_URL = "https://fleet-command-api.onrender.com/api/assets"
-        const val LOCAL_SERVER_URL = "http://172.19.205.20:3000/api/telemetry"
-        const val LOCAL_ASSETS_URL = "http://172.19.205.20:3000/api/assets"
-        private const val CONNECT_TIMEOUT_MS = 6000
-        private const val READ_TIMEOUT_MS = 8000
+        const val LOCAL_SERVER_URL = "http://172.19.152.188:3000/api/telemetry"
+        const val LOCAL_ASSETS_URL = "http://172.19.152.188:3000/api/assets"
+        private const val CONNECT_TIMEOUT_MS = 10000
+        private const val READ_TIMEOUT_MS = 12000
         val FALLBACK_BUS_LIST = listOf("GITAM-BUS-01", "GITAM-BUS-02", "GITAM-BUS-03", "GITAM-BUS-04", "GITAM-BUS-05")
     }
 
